@@ -5,6 +5,7 @@
 # TODO: allow subsetting for rain/clouds, temperature, and wind/tides
 # TODO: add in tide data
 # TODO: make print function, include emojis for hourly blocks in day (maybe just for today and tomorrow)
+# Make print on the daily level for 9am, 1pm, 5pm, 9pm
 
 # base imports
 import argparse
