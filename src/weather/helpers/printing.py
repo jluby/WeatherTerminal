@@ -22,4 +22,5 @@ def set_entry_size_manual(height, width):
 
 
 def print_weather(weather_dict, sun_dict, historical_temp_dict, d):
+    # TODO: build out print functionality
     pass

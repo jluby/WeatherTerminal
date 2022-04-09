@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Display weather forecast according to user config."""
 
-# TODO: clean up package
-# TODO: build out printing functionality (at day level only)
 # TODO: get wind to print with turned arrow (on matplot)
 # TODO: allow subsetting for rain/clouds, temperature, and wind/tides
 # TODO: add in tide data
@@ -16,11 +14,9 @@ from contextlib import suppress
 from pathlib import Path
 from pprint import pprint
 
-import numpy as np
 import requests
-from pyowm.owm import OWM
 
-from weather.helpers import helpers, plotting, scrape
+from weather.helpers import plotting, scrape
 from weather.helpers.configure import config_path, init_config, timed_sleep
 from weather.helpers.printing import reformat, set_entry_size_manual
 
