@@ -4,6 +4,7 @@
 # TODO: get wind to print with turned arrow (on matplot)
 # TODO: allow subsetting for rain/clouds, temperature, and wind/tides
 # TODO: add in tide data
+# TODO: make print function, include emojis for hourly blocks in day (maybe just for today and tomorrow)
 
 # base imports
 import argparse
@@ -150,13 +151,9 @@ def main():
 
     if not d["print"]:
         if not d["matplot"]:
-            plotting.plot_terminal(
-                weather_dict, sun_dict, historical_temp_dict, d
-            )
+            plotting.plot_terminal(weather_dict, sun_dict, d)
         else:
-            plotting.plot_matplot(
-                weather_dict, sun_dict, historical_temp_dict, d
-            )
+            plotting.plot_matplot(weather_dict, sun_dict, d)
     else:
         printing.print_weather(weather_dict, sun_dict, historical_temp_dict, d)
 
