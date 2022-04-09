@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 """Display weather forecast according to user config."""
 
+# TODO: clean up package
+# TODO: build out printing functionality (at day level only)
+# TODO: get wind to print with turned arrow (on matplot)
+# TODO: allow subsetting for rain/clouds, temperature, and wind/tides
+# TODO: add in tide data
+
 # base imports
 import argparse
 import json
 import re
+import warnings
 from contextlib import suppress
 from pathlib import Path
 from pprint import pprint
@@ -18,29 +25,10 @@ from weather.helpers.configure import config_path, init_config, timed_sleep
 from weather.helpers.printing import reformat, set_entry_size_manual
 
 
-def request_config():
-    config = json.load(open(config_path, "r"))
-    key = ""
+def request_location(config):
+    config["loc_hash"] = ""
     while True:
-        if key == "":
-            input_str = "Please enter your OpenWeatherMap API key:"
-        else:
-            input_str = "There was a problem verifying your key. Please verify your entry and try again:"
-        key = input(reformat(input_str, input_type="input"))
-        with suppress(ValueError):
-            owm = OWM(key)
-        if owm is not None:
-            config["key"] = key
-            json.dump(config, open(config_path, "w"))
-            print("\n\tKey successfully initialized and saved.")
-            timed_sleep()
-            return owm, key
-
-
-def request_location(owm, config):
-    lat_long = ""
-    while True:
-        if lat_long == "":
+        if config["loc_hash"] == "":
             input_str = "Please navigate to your local weather.com page and enter the URL below. The url should follow the format (https://weather.com/weather/[timeframe]/l/[location_hash])"
         else:
             input_str = "There was a problem verifying your location. Please verify your entry and try again:"
@@ -51,6 +39,7 @@ def request_location(owm, config):
             page_text = requests.get(
                 f"https://weather.com/weather/today/l/{config['loc_hash']}"
             ).text
+            # get latitude and logitude by regex
             match = re.search(
                 r'"latitude\\":(.*?),\\"longitude\\":(.*?),', page_text
             )
@@ -59,7 +48,7 @@ def request_location(owm, config):
             json.dump(config, open(config_path, "w"))
             print(f"\n\tLocation successfully initialized and saved.")
             timed_sleep()
-            return config
+            return config["loc_hash"]
 
 
 def main():
@@ -77,30 +66,33 @@ def main():
         help="Number of days to show. If n_days <= 2, forecasts will be shown at the hourly level.",
     )
     parser.add_argument(
+        "-print",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Print results. Only supported for n_days >= 3.",
+    )
+    parser.add_argument(
         "-show",
         type=str,
-        nargs="+",
-        default=config["show"],
-        choices=helpers.fields,
-        help="Attributes to show.",
+        nargs="?",
+        choices=[
+            "rain",
+            "temp",
+            "row",
+        ],  # rain: precipChance, cloudCover. temp: temperature, temperatureFeelsLike. row: windSpeed, windDirection, tides
+        help="Attributes types to show.",
     )
     parser.add_argument(
         "-matplot",
         action=argparse.BooleanOptionalAction,
         default=False,
-        help="If provided, print to terminal instead of standard matplotlib.show().",
+        help="If provided, display with 'matplotlib' show() instead of 'plotext' show to terminal.",
     )
     parser.add_argument(
         "-save_config",
         action=argparse.BooleanOptionalAction,
         default=False,
-        help="If provided, save the provided configuration (at the 'graph' level) as default.",
-    )
-    parser.add_argument(
-        "--config_api",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help="If provided, reconfigure api.",
+        help="If provided, save the provided configuration as default.",
     )
     parser.add_argument(
         "--config_location",
@@ -110,40 +102,49 @@ def main():
     )
     d = vars(parser.parse_args())
 
+    if d["print"]:
+        if d["n_days"] <= 2:
+            raise ValueError(
+                reformat(
+                    "Printing is only supported for n_days >= 3.",
+                    input_type="error",
+                )
+            )
+        elif d["show"]:
+            warnings.warn(
+                reformat(
+                    "'show' kwarg is only supported for plotting.",
+                    input_type="error",
+                )
+            )
+        elif d["show"]:
+            warnings.warn(
+                reformat(
+                    "'matplot' argument will be ignored while printing.",
+                    input_type="error",
+                )
+            )
+
     if d["save_config"]:
         json.dump(
-            {k: v for k, v in d.items() if k not in ["graph", "save_config"]},
+            {k: v for k, v in d.items() if k != "save_config"},
             open(config_path, "w"),
         )
 
         print(reformat(f"Parameters saved. Defaults are now:"))
-        show_width = sum([len(s) + 4 for s in config["config"]["show"]]) + 14
         pprint(config["config"], indent=4)
         print("")
-        set_entry_size_manual(
-            height=len(config) + 8, width=np.max([29, show_width])
-        )
         timed_sleep()
 
-    if config["key"] is None or d["config_api"]:
-        owm, config["key"] = request_config()
-    else:
-        owm = OWM(config["key"])
-    if config["lat_long"] is None or d["config_location"]:
-        config["lat_long"] = request_location(owm, config)
+    if config["loc_hash"] is None or d["config_location"]:
+        config["loc_hash"] = request_location(config)
 
-    today_soup = requests.get(
-        f"https://weather.com/weather/today/l/{config['loc_hash']}"
-    ).text
-    hourly_soup = requests.get(
-        f"https://weather.com/weather/hourbyhour/l/{config['loc_hash']}"
-    ).text
-    daily_soup = requests.get(
-        f"https://weather.com/weather/monthly/l/{config['loc_hash']}"
-    ).text
-    soup = today_soup + daily_soup + hourly_soup
+    soup = ""
+    for page in ["today", "hourbyhour", "monthly"]:
+        soup += requests.get(
+            f"https://weather.com/weather/{page}/l/{config['loc_hash']}"
+        ).text
 
-    # If it does exist, get weather using location
     if d["n_days"] <= 2:
         weather_dict = scrape.get_weather_hourly(soup, d=d)
     else:
@@ -151,16 +152,17 @@ def main():
     sun_dict = scrape.get_sun(soup, d)
     historical_temp_dict = scrape.get_historical_temperatures(soup, d)
 
-    if not d["matplot"]:
-        plotting.plot_terminal(weather_dict, sun_dict, historical_temp_dict, d)
+    if not d["print"]:
+        if not d["matplot"]:
+            plotting.plot_terminal(
+                weather_dict, sun_dict, historical_temp_dict, d
+            )
+        else:
+            plotting.plot_matplot(
+                weather_dict, sun_dict, historical_temp_dict, d
+            )
     else:
-        plotting.plot_matplot(weather_dict, sun_dict, historical_temp_dict, d)
-    # if d["timeframe"] in ["15m", "hourly"]:
-    #     d["periods"] = len(weather_dict[d["timeframe"]]["validTimeLocal"])
-    #     graph.hourly_graph(d, weather_dict)
-    # elif d["timeframe"] in ["daily", "day_night"]:
-    #     d["periods"] = len(weather_dict[d["timeframe"]]["validTimeLocal"])
-    #     graph.daily_graph(d, weather_dict)
+        printing.print_weather(weather_dict, sun_dict, historical_temp_dict, d)
 
 
 if __name__ == "__main__":

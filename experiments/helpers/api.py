@@ -7,6 +7,23 @@ import requests
 from parse import *
 from suntime import Sun
 
+def request_config():
+    config = json.load(open(config_path, "r"))
+    key = ""
+    while True:
+        if key == "":
+            input_str = "Please enter your OpenWeatherMap API key:"
+        else:
+            input_str = "There was a problem verifying your key. Please verify your entry and try again:"
+        key = input(reformat(input_str, input_type="input"))
+        with suppress(ValueError):
+            owm = OWM(key)
+        if owm is not None:
+            config["key"] = key
+            json.dump(config, open(config_path, "w"))
+            print("\n\tKey successfully initialized and saved.")
+            timed_sleep()
+            return owm, key
 
 def clean_hour(hour_str):
     return hour_str.replace(" ", ":00 ").upper()

@@ -1,52 +1,11 @@
 import calendar
 from datetime import date, datetime, timedelta
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import plotext as plt
+import plotext
 
 from weather.helpers.printing import set_entry_size_manual
-
-
-def get_sun_moves(weather_dict):
-    sun = {"sunrises": [], "sunsets": []}
-    day = 0
-    while len(sun["sunrises"]) + len(sun["sunsets"]) < 6:
-        sunrise_time = weather_dict["daily"]["sunriseTimeLocal"][day]
-        sunset_time = weather_dict["daily"]["sunsetTimeLocal"][day]
-        if sunrise_time > datetime.now():
-            sun["sunrises"].append(sunrise_time)
-            sun["sunsets"].append(sunset_time)
-        else:
-            sun["sunsets"].append(sunset_time)
-        day += 1
-    return sun
-
-
-def relTime(times, time0, fifteen_m: bool):
-    relTime = [(t - time0).total_seconds() / 3600 for t in times]
-    if fifteen_m:
-        relTime = [t * 4 for t in relTime]
-
-    return relTime
-
-
-# def process_weather_calls(weather_calls):
-#     weather_dict = {}
-#     for call in weather_calls:
-#         weather_dict[call.reference_time()] = {
-#             "temp":call.temperature('fahrenheit')["temp"],
-#             "feel":call.temperature('fahrenheit')["feels_like"],
-#             "hum":call.humidity,
-#             "wind":call.wind()["speed"],
-#             "wind_dir": call.wind()["deg"],
-#             "cover":call.clouds
-#         }
-
-
-def daily_plot(d: dict, weather_dict: dict, day_night: bool = False):
-    pass
 
 
 def my_step(yvals, label, idx):
@@ -58,11 +17,11 @@ def my_step(yvals, label, idx):
         + [idx[-1]]
     )
     yvals = [y for y in yvals for x in range(2)]
-    plt.plot(xvals, yvals, label=label)
+    plotext.plot(xvals, yvals, label=label)
 
 
-def plot_terminal(weather_dict, sun_dict, historical_temp_dict, d):
-    import plotext as plt
+def plot_terminal(weather_dict, sun_dict, d):
+    """Plot to terminal."""
 
     if d["n_days"] <= 2:
         time_start = datetime.combine(date.today(), datetime.min.time())
@@ -85,23 +44,15 @@ def plot_terminal(weather_dict, sun_dict, historical_temp_dict, d):
                 "windSpeed",
             ]:
                 my_step(yvals, label=label, idx=idx)
-        plt.xlim(0, np.max(idx))
         xticks = [datetime.strftime(x, "%I:%M") for x in time_range]
-        plt.xticks(ticks=idx[::2], labels=xticks[::2])
-        plt.ylim(0, 100)
-        plt.yticks(range(0, 101, 10))
-        plt.plot_size(150, 40)
-        plt.limit_size(False, False)
-        plt.grid(True)
+        plotext.xticks(ticks=idx[::2], labels=xticks[::2])
         for m in sun_dict["sunriseTimeLocal"]:
             m = (m - time_range[0]).total_seconds() / 3600
-            plt.vertical_line(m, color=226)
+            plotext.vertical_line(m, color=226)
         for m in sun_dict["sunsetTimeLocal"]:
             m = (m - time_range[0]).total_seconds() / 3600
-            plt.vertical_line(m, color=220)
-        plt.vertical_line(timediff, color=1)
-        plt.show()
-        set_entry_size_manual(height=41, width=154)
+            plotext.vertical_line(m, color=220)
+        plotext.vertical_line(timediff, color=1)
     else:
         today = date.today()
         time_range = [
@@ -118,18 +69,19 @@ def plot_terminal(weather_dict, sun_dict, historical_temp_dict, d):
                 "windSpeed",
             ]:
                 my_step(yvals, label=label, idx=idx)
-        plt.xlim(0, np.max(idx))
-        plt.xticks(ticks=idx, labels=time_range)
-        plt.ylim(0, 100)
-        plt.yticks(range(0, 101, 10))
-        plt.plot_size(150, 40)
-        plt.limit_size(False, False)
-        plt.grid(True)
-        plt.show()
-        set_entry_size_manual(height=41, width=154)
+        plotext.xticks(ticks=idx, labels=time_range)
+    plotext.xlim(0, np.max(idx))
+    plotext.ylim(0, 100)
+    plotext.yticks(range(0, 101, 10))
+    plotext.plot_size(150, 40)
+    plotext.limit_size(False, False)
+    plotext.grid(True)
+    plotext.show()
+    set_entry_size_manual(height=41, width=154)
 
 
-def plot_matplot(weather_dict, sun_dict, historical_temp_dict, d):
+def plot_matplot(weather_dict, sun_dict, d):
+    """Plot to standard matplotlib output."""
     import matplotlib.pyplot as plt
 
     plt.rcParams["figure.figsize"] = (20, 7)
@@ -155,11 +107,8 @@ def plot_matplot(weather_dict, sun_dict, historical_temp_dict, d):
                 "windSpeed",
             ]:
                 plt.step(idx, yvals[: len(idx)], label=label, alpha=0.8)
-        plt.xlim(0, np.max(idx))
         xticks = [datetime.strftime(x, "%I:%M") for x in time_range]
         plt.xticks(ticks=idx[::4], labels=xticks[::4])
-        plt.ylim(0, 100)
-        plt.yticks(range(0, 101, 10))
         for m in sun_dict["sunriseTimeLocal"]:
             m = (m - time_range[0]).total_seconds() / 3600
             plt.vlines(
@@ -188,10 +137,10 @@ def plot_matplot(weather_dict, sun_dict, historical_temp_dict, d):
                 "windSpeed",
             ]:
                 plt.step(idx, yvals[: len(idx)], label=label, alpha=0.8)
-        plt.xlim(0, np.max(idx))
         plt.xticks(ticks=idx, labels=time_range)
-        plt.ylim(0, 100)
-        plt.yticks(range(0, 101, 10))
+    plt.xlim(0, np.max(idx))
+    plt.ylim(0, 100)
+    plt.yticks(range(0, 101, 10))
     plt.grid(True)
     plt.legend(loc="upper right")
     plt.show()
