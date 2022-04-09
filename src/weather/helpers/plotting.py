@@ -106,7 +106,7 @@ def plot_matplot(weather_dict, sun_dict, d):
                 "cloudCover",
                 "windSpeed",
             ]:
-                plt.step(idx, yvals[: len(idx)], label=label, alpha=0.8)
+                plt.step(idx, yvals[: len(idx)], label=label, alpha=0.8, where="mid")
         xticks = [datetime.strftime(x, "%I:%M") for x in time_range]
         plt.xticks(ticks=idx[::4], labels=xticks[::4])
         for m in sun_dict["sunriseTimeLocal"]:
@@ -136,7 +136,7 @@ def plot_matplot(weather_dict, sun_dict, d):
                 "cloudCover",
                 "windSpeed",
             ]:
-                plt.step(idx, yvals[: len(idx)], label=label, alpha=0.8)
+                plt.step(idx, yvals[: len(idx)], label=label, alpha=0.8, where="mid")
         plt.xticks(ticks=idx, labels=time_range)
     plt.xlim(0, np.max(idx))
     plt.ylim(0, 100)
