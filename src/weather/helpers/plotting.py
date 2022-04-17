@@ -96,28 +96,29 @@ def plot_matplot(weather_dict, sun_dict, d):
             for t in pd.date_range(time_start, time_end, freq="H")
         ][:-1]
         current_time = datetime.now()
+        plot_dict = {
+                "temperature": {"v": weather_dict["temperature"], "c": "#FF3838"},
+                "temperatureFeelsLike": {"v": weather_dict["temperatureFeelsLike"], "c": "#FFB338"},
+                "precipChance": {"v": weather_dict["precipChance"], "c": "#4A5CFF"},
+                "cloudCover": {"v": weather_dict["cloudCover"], "c": "#A912E0"},
+                "windSpeed": {"v": weather_dict["windSpeed"], "c": "#38FFA9"}
+                }
         timediff = (current_time - time_range[0]).total_seconds() / 3600
         idx = [i for i in range(len(time_range))]
-        for label, yvals in weather_dict.items():
-            if label in [
-                "temperature",
-                "temperatureFeelsLike",
-                "precipChance",
-                "cloudCover",
-                "windSpeed",
-            ]:
-                plt.step(idx, yvals[: len(idx)], label=label, alpha=0.8, where="mid")
+        for label, i_dict in plot_dict.items():
+            i_dict["v"] = i_dict["v"] + [float("NaN")] * (len(idx)-len(i_dict["v"]))
+            plt.step(idx, i_dict["v"][: len(idx)], label=label, alpha=0.8, where="mid", color=i_dict["c"])
         xticks = [datetime.strftime(x, "%I:%M") for x in time_range]
         plt.xticks(ticks=idx[::4], labels=xticks[::4])
         for m in sun_dict["sunriseTimeLocal"]:
             m = (m - time_range[0]).total_seconds() / 3600
             plt.vlines(
-                m, ymin=0, ymax=100, alpha=0.8, linestyles=":", color="yellow"
+                m, ymin=0, ymax=100, alpha=0.8, linestyles=":", color="gold"
             )
         for m in sun_dict["sunsetTimeLocal"]:
             m = (m - time_range[0]).total_seconds() / 3600
             plt.vlines(
-                m, ymin=0, ymax=100, alpha=0.8, linestyles=":", color="gold"
+                m, ymin=0, ymax=100, alpha=0.8, linestyles=":", color="#FFC838"
             )
         plt.vlines(timediff, ymin=0, ymax=100, alpha=0.8, color="red")
     else:
@@ -126,17 +127,18 @@ def plot_matplot(weather_dict, sun_dict, d):
             calendar.day_name[(today + timedelta(days=i)).weekday()]
             for i in range(d["n_days"])
         ]
+        plot_dict = {
+                "calendarDayTemperatureMax": {"v": weather_dict["calendarDayTemperatureMax"], "c": "#FF3838"},
+                "calendarDayTemperatureMin": {"v": weather_dict["calendarDayTemperatureMin"], "c": "#FFB338"},
+                "precipChance": {"v": weather_dict["precipChance"], "c": "#4A5CFF"},
+                "cloudCover": {"v": weather_dict["cloudCover"], "c": "#A912E0"},
+                "windSpeed": {"v": weather_dict["windSpeed"], "c": "#38FFA9"}
+                }
         idx = [i for i in range(len(time_range))]
-        for label, yvals in weather_dict.items():
-            yvals = [y if y != "null" else float("NaN") for y in yvals]
-            if label in [
-                "calendarDayTemperatureMax",
-                "calendarDayTemperatureMin",
-                "precipChance",
-                "cloudCover",
-                "windSpeed",
-            ]:
-                plt.step(idx, yvals[: len(idx)], label=label, alpha=0.8, where="mid")
+        for label, i_dict in plot_dict.items():
+            yvals = [v if v != "null" else float("NaN") for v in i_dict["v"]]
+            yvals = yvals + [float("NaN")] * (len(idx)-len(yvals))
+            plt.step(idx, yvals[: len(idx)], label=label, alpha=0.8, where="mid", color=i_dict["c"])
         plt.xticks(ticks=idx, labels=time_range)
     plt.xlim(0, np.max(idx))
     plt.ylim(0, 100)
