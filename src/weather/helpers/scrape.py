@@ -84,9 +84,9 @@ def process_by_time_daily(soup):
     search_str = soup[start_loc : start_loc + 15000]
     obs = {k: None for k in day_attrs}
     for a in day_attrs:
-        match = re.search(r'"{}\\":\[(.*?)\],'.format(a), search_str)
+        match = re.findall(r'"{}\\":\[(.*?)\],'.format(a), search_str)
         if match:
-            list_str = match.group(1)
+            list_str = match[1] if a in ["calendarDayTemperatureMax", "calendarDayTemperatureMin"] else match[0]
             obs_list = list_str.split(",")
             obs[a] = (
                 [x.strip('"\\') for x in obs_list]
