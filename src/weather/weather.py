@@ -81,10 +81,10 @@ def main():
         help="Attributes types to show.",
     )
     parser.add_argument(
-        "-matplot",
+        "-terminal",
         action=argparse.BooleanOptionalAction,
         default=False,
-        help="If provided, display with 'matplotlib' show() instead of 'plotext' show to terminal.",
+        help="If provided, display with 'plotext' in terminal instead of 'matplotlib'.",
     )
     parser.add_argument(
         "-save_config",
@@ -115,10 +115,10 @@ def main():
                     input_type="error",
                 )
             )
-        elif d["show"]:
+        elif d["terminal"]:
             warnings.warn(
                 reformat(
-                    "'matplot' argument will be ignored while printing.",
+                    "'terminal' argument will be ignored while printing.",
                     input_type="error",
                 )
             )
@@ -151,7 +151,7 @@ def main():
     historical_temp_dict = scrape.get_historical_temperatures(soup, d)
 
     if not d["print"]:
-        if not d["matplot"]:
+        if d["terminal"]:
             plotting.plot_terminal(weather_dict, sun_dict, d)
         else:
             plotting.plot_matplot(weather_dict, sun_dict, d)
