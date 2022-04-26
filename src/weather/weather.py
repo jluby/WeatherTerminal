@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Display weather forecast according to user config."""
 
-# TODO: a bit of shading for historical avg. high and low (lower alpha than true daily values)
 # TODO: shade daily highs and lows as range instead of lines
+# TODO: a bit of shading for historical avg. high and low (lower alpha than true daily values)
 # TODO: print #s in daily
 # TODO: allow subsetting for rain/clouds, temperature, and wind/tides
 # TODO: lighter gridlines at 2 hour marks for hourly
