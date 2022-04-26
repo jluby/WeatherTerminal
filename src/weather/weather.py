@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Display weather forecast according to user config."""
 
-# TODO: add in tide data - make tide a user argument to add station ID and make sure it can get tides successfully
-# TODO: a bit of shading for historical avg. high and low
-# TODO: print #s above daily, can be badly done
+# TODO: add in tide data
+# TODO: get tide data automatically from lat_lon with saved data on lat/long and available station IDs
+# TODO: a bit of shading for historical avg. high and low (lower alpha than true daily values)
+# TODO: shade daily highs and lows as range instead of lines
+# TODO: print #s in daily
 # TODO: allow subsetting for rain/clouds, temperature, and wind/tides
-# TODO: lighter gridlines at 2 hour marks
+# TODO: lighter gridlines at 2 hour marks for hourly
+# TODO: add some kind of location label for all plots
 
 # base imports
 import argparse
@@ -14,6 +17,7 @@ import re
 import warnings
 from contextlib import suppress
 from pathlib import Path
+from matplotlib.pyplot import hist
 
 import requests
 
@@ -195,11 +199,14 @@ def main():
         else:
             weather_dict = scrape.get_weather_hourly_h(soup)
         weather_dict = {k:v[:d["n_days"]*24] for k,v in weather_dict.items()}
+        sun_dict = scrape.get_sun(soup, d)
+        weather_dict.update(sun_dict)
     else:
         weather_dict = scrape.get_weather_daily(soup)
-    sun_dict = scrape.get_sun(soup, d)
-    #tide_dict = scrape.get_tides(loc_config)
-    historical_temp_dict = scrape.get_historical_temperatures(soup, d)
+        historical_temp_dict = scrape.get_historical_temperatures(soup, d)
+        weather_dict.update(historical_temp_dict)
+    tide_dict = scrape.get_tides(loc_config, d)
+    weather_dict.update(tide_dict)
 
     if not d["print"]:
         if d["terminal"]:

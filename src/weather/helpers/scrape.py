@@ -4,10 +4,10 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import requests
 from parse import *
-import tidetable
-from weather.helpers.configure import PKG_PATH
 
 from weather.helpers.tides import haversine
+
+from weather.helpers.configure import PKG_PATH
 
 hour_attrs = [
     "validTimeLocal",
@@ -212,8 +212,15 @@ def get_historical_temperatures(soup, d):
 
     return out_dict
 
-def get_tides(loc_config):
-    pass
+def get_tides(loc_config, d):
+    tide_dict = {}
+    
+    return tide_dict
+
+def generate_tide_station_df():
+    tide_stations = pd.DataFrame()
+    
+    tide_stations.to_csv(f"{PKG_PATH}/.data/tide_stations.csv")
 
 def Soup(url):
     print(requests.get(url))
