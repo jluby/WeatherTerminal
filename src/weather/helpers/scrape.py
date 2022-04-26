@@ -28,6 +28,7 @@ day_attrs = [
     "cloudCover",
     "windSpeed",
     "windDirectionCardinal",
+    "wxPhraseLong"
 ]
 
 
@@ -95,7 +96,7 @@ def get_weather_daily(soup):
         match = re.findall(r'"{}\\":\[(.*?)\],'.format(a), search_str)
         if match:
             obs_list = [x.strip('"\\') for x in match[1].split(",")]
-            if a not in ["precipType", "windDirectionCardinal"]:
+            if a not in ["precipType", "windDirectionCardinal", "wxPhraseLong"]:
                 obs_list = [float(x) if x != "null" else x for x in obs_list]
             if a not in [
                 "calendarDayTemperatureMax",

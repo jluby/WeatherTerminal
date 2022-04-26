@@ -100,7 +100,6 @@ def plot_matplot(weather_dict, d):
     plt.rcParams["font.size"] = 8
 
     if d["n_days"] <= 2:
-        title_str = "Hourly"
         if d["d"]:
             time_start = datetime.combine(date.today(), datetime.min.time())
             time_end = datetime.combine(date.today() + timedelta(days=d["n_days"]), datetime.min.time())
@@ -159,7 +158,7 @@ def plot_matplot(weather_dict, d):
                     markersize=5,
                     label="Wind Speed (mph)",
                 )
-                for i in idx:
+                for i in idx[:len(weather_dict["windDirectionCardinal"])]:
                     plt.plot(
                         i,
                         plot_dict["v"][i],
@@ -211,8 +210,8 @@ def plot_matplot(weather_dict, d):
                 label="Water Level (Relative %)",
                 alpha=0.2,
             )
+        plt.title(f"Hourly Weather Forecast for {weather_dict['name']}")
     else:
-        title_str = "Daily"
         today = date.today()
         time_range = [calendar.day_name[(today + timedelta(days=i)).weekday()] for i in range(d["n_days"])]
         plot_dicts = [
@@ -307,12 +306,14 @@ def plot_matplot(weather_dict, d):
                         alpha=0.3,
                         color="black",
                     )
+        labels = [w if w != "null" else "" for w in weather_dict["wxPhraseLong"]]
+        for i in idx:
+            plt.text(i, 101, labels[i], ha="center")
         plt.xticks(ticks=idx, labels=time_range)
-        plt.title(f"Daily Weather Forecast for {weather_dict['name']}")
+        plt.title(f"Daily Weather Forecast for {weather_dict['name']}\n")
     plt.xlim(0, np.max(idx))
     plt.ylim(0, 100)
     plt.yticks(range(0, 101, 10))
     plt.grid(True)
     plt.legend(loc="upper right")
-    plt.title(f"{title_str} Weather Forecast for {weather_dict['name']}")
     plt.show()
