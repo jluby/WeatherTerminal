@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Display weather forecast according to user config."""
 
-# TODO: add in tide data
-# TODO: get tide data automatically from lat_lon with saved data on lat/long and available station IDs
 # TODO: a bit of shading for historical avg. high and low (lower alpha than true daily values)
 # TODO: shade daily highs and lows as range instead of lines
 # TODO: print #s in daily
@@ -14,6 +12,7 @@
 import argparse
 import json
 import warnings
+import re
 
 import requests
 
@@ -40,12 +39,6 @@ def main():
         help="Provide alias of selected location.",
     )
     parser.add_argument(
-        "-print",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help="Print results. Only supported for n_days >= 3.",
-    )
-    parser.add_argument(
         "-d",
         action=argparse.BooleanOptionalAction,
         default=False,
@@ -70,29 +63,6 @@ def main():
     )
     d = vars(parser.parse_args())
 
-    if d["print"]:
-        if d["n_days"] <= 2:
-            raise ValueError(
-                reformat(
-                    "Printing is only supported for n_days >= 3.",
-                    input_type="error",
-                )
-            )
-        elif d["show"]:
-            warnings.warn(
-                reformat(
-                    "'show' kwarg is only supported for plotting.",
-                    input_type="error",
-                )
-            )
-        elif d["terminal"]:
-            warnings.warn(
-                reformat(
-                    "'terminal' argument will be ignored while printing.",
-                    input_type="error",
-                )
-            )
-
     if len(config) is 0:
         raise ValueError(reformat("No config yet specified.", input_type="error"))
     elif d["alias"] is None:
@@ -114,6 +84,8 @@ def main():
         soup += requests.get(
             f"https://weather.com/weather/{page}/l/{loc_config['weather_hash']}"
         ).text
+    lat_long_str = re.search(r'"latitude\\":(.*?),\\"longitude\\":(.*?),', soup)
+    loc_config["lat_lon"] = (float(lat_long_str.group(1)), float(lat_long_str.group(2)))
 
     if d["n_days"] <= 2:
         if not d["d"]:
@@ -128,14 +100,13 @@ def main():
         weather_dict = scrape.get_weather_daily(soup)
         weather_dict.update(historical_temp_dict)
     if "tide_station" in loc_config.keys():
-        tide_dict = scrape.get_tides(loc_config["tide_station"])
+        tide_dict = scrape.get_tides(loc_config, d)
         weather_dict.update(tide_dict)
 
-    if not d["print"]:
-        if d["terminal"]:
-            plotting.plot_terminal(weather_dict, d)
-        else:
-            plotting.plot_matplot(weather_dict, d)
+    if d["terminal"]:
+        plotting.plot_terminal(weather_dict, d)
+    else:
+        plotting.plot_matplot(weather_dict, d)
 
 if __name__ == "__main__":
     main()

@@ -7,6 +7,9 @@ import plotext
 
 from weather.helpers.configure import set_entry_size_manual
 
+def normalize(series):
+    return (series - np.min(series))/(np.max(series) - min(series))*100
+
 def my_step(yvals, label, idx):
     if label == "precip":
         yvals = [y[0] for y in yvals]
@@ -153,6 +156,14 @@ def plot_matplot(weather_dict, d):
         for p in night_periods:
             # add shading to nighttime
             plt.axvspan(p[0], p[1], alpha=.1, color='black')
+        if weather_dict["water_level"]:
+            tides = {"rel_time":[], "water_level":[]}
+            for i, t in enumerate(weather_dict["local_time"]):
+                if t >= time_range[0] and t <= time_range[-1]:
+                    rel_time = (t - time_range[0]).total_seconds()/3600
+                    tides["rel_time"].append(rel_time); tides["water_level"].append(weather_dict["water_level"][i])
+            tides["water_level"] = normalize(tides["water_level"])
+            plt.plot(tides["rel_time"], tides["water_level"], label="Water Level (Relative %)", alpha=.2)
     else:
         today = date.today()
         time_range = [

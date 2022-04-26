@@ -7,6 +7,7 @@ from parse import *
 import warnings
 
 import noaa_coops as nc
+import timezonefinder, pytz
 
 hour_attrs = [
     "validTimeLocal",
@@ -211,21 +212,31 @@ def get_historical_temperatures(soup, d):
 
     return out_dict
 
-def get_tides(tide_station, d):
-    station = nc.Station(tide_station)
-    try:
-        df_water_levels = station.get_data(
-            begin_date=date.today().strftime("%Y%m%d"),
-            end_date= (date.today() + timedelta(days=d["days"])).strftime("%Y%m%d"),
-            product="water_level",
-            datum="MLLW",
-            units="metric",
-            time_zone="gmt")
-    except:
-        warnings.warn(f"No valid datum value for MLLW ***station={tide_station}")
-        return {}
-    print(df_water_levels)
-    exit()
+def get_tides(loc_config, d):
+    station = nc.Station(loc_config["tide_station"])
+    tf = timezonefinder.TimezoneFinder()
+
+    #try:
+    tides = station.get_data(
+        begin_date= (date.today() - timedelta(days=1)).strftime("%Y%m%d"),
+        end_date= (date.today() + timedelta(days=d["n_days"]+1)).strftime("%Y%m%d"),
+        product="predictions",
+        datum="MLLW",
+        units="metric",
+        time_zone="gmt").reset_index()
+    #except:
+    #    warnings.warn(f"No valid datum value for MLLW ***station={tide_station}")
+    #    return {}
+
+    home_timezone_str = tf.certain_timezone_at(lat=loc_config["lat_lon"][0], lng=loc_config["lat_lon"][1])
+    tides["date_time"] = tides["date_time"].dt.tz_localize("GMT").dt.tz_convert(home_timezone_str).dt.tz_localize(None)
+
+    tide_dict = {
+        "local_time": [x.to_pydatetime() for x in tides["date_time"]],
+        "water_level": tides["predicted_wl"].to_list()
+    }
+    
+    return tide_dict
 
 def Soup(url):
     print(requests.get(url))
