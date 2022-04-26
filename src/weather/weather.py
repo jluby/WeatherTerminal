@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 """Display weather forecast according to user config."""
 
-# TODO: shade daily highs and lows as range instead of lines
-# TODO: a bit of shading for historical avg. high and low (lower alpha than true daily values)
 # TODO: print #s in daily
 # TODO: allow subsetting for rain/clouds, temperature, and wind/tides
-# TODO: lighter gridlines at 2 hour marks for hourly
-# TODO: add some kind of location label for all plots
 
 # base imports
 import argparse
 import json
-import warnings
 import re
 
 import requests
@@ -102,6 +97,8 @@ def main():
     if "tide_station" in loc_config.keys():
         tide_dict = scrape.get_tides(loc_config, d)
         weather_dict.update(tide_dict)
+
+    weather_dict["name"] = re.search(r"Hourly Weather Forecast for(.*?)- The Weather Channel", soup).group(1).strip()
 
     if d["terminal"]:
         plotting.plot_terminal(weather_dict, d)

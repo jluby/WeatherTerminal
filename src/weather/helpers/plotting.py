@@ -104,8 +104,12 @@ def plot_matplot(weather_dict, d):
     import matplotlib.pyplot as plt
 
     plt.rcParams["figure.figsize"] = (20, 7)
+    plt.rcParams['font.family'] = 'sans-serif'
+    plt.rcParams['font.serif'] = 'Helvetica Neue'
+    plt.rcParams['font.size'] = 8
 
     if d["n_days"] <= 2:
+        title_str = "Hourly"
         if d["d"]:
             time_start = datetime.combine(date.today(), datetime.min.time())
             time_end = datetime.combine(
@@ -138,8 +142,7 @@ def plot_matplot(weather_dict, d):
                 for i in idx:
                     plt.plot(i, plot_dict["v"][i], color=plot_dict["c"], marker=define_marker(weather_dict["windDirectionCardinal"][i]))
         xticks = [datetime.strftime(x, "%I:%M") for x in time_range]
-        plt.xticks(ticks=idx[::4], labels=xticks[::4])
-        # plot sunrise and sunset
+        plt.xticks(ticks=idx[::2], labels=[x if i%2 == 0 else None for i,x in enumerate(xticks[::2])])
         sunrise_diffs = [(m - time_range[0]).total_seconds() / 3600 for m in weather_dict["sunriseTimeLocal"]]
         sunset_diffs = [(m - time_range[0]).total_seconds() / 3600 for m in weather_dict["sunsetTimeLocal"]]
         plt.vlines(
@@ -165,14 +168,13 @@ def plot_matplot(weather_dict, d):
             tides["water_level"] = normalize(tides["water_level"])
             plt.plot(tides["rel_time"], tides["water_level"], label="Water Level (Relative %)", alpha=.2)
     else:
+        title_str = "Daily"
         today = date.today()
         time_range = [
             calendar.day_name[(today + timedelta(days=i)).weekday()]
             for i in range(d["n_days"])
         ]
         plot_dicts = [
-                {"v": weather_dict["calendarDayTemperatureMax"], "c": "#FF3838", "label": "Max Temperature (°F)"},
-                {"v": weather_dict["calendarDayTemperatureMin"], "c": "#FFB338", "label": "Min Temperature (°F)"},
                 {"v": weather_dict["precipChance"], "c": "#4A5CFF", "label": "Precipitation Chance (%)"},
                 {"v": weather_dict["cloudCover"], "c": "#A912E0", "label": "Cloud Cover (%)"},
                 {"v": weather_dict["windSpeed"], "c": "#3FBE34", "label": "Wind Speed (mph)"}
@@ -188,10 +190,23 @@ def plot_matplot(weather_dict, d):
                           label='Wind Speed (mph)')
                 for i in idx:
                     plt.plot(i, yvals[i], color=plot_dict["c"], marker=define_marker(weather_dict["windDirectionCardinal"][i]))
+        temperature_dicts = [
+            {"v": [weather_dict["calendarDayTemperatureMin"], weather_dict["calendarDayTemperatureMax"]], "c": "#6ED322", "label": "Temperature Range (°F)", "alpha": .7},
+            {"v": [weather_dict["temperatureAverageMin"], weather_dict["temperatureAverageMax"]], "c": "#F7F957", "label": "Historical Average Temperature Range (°F)", "alpha": .1}
+        ]
+        for temp_dict in temperature_dicts:
+            yvals = [[v if v != "null" else float("NaN") for v in l] + [float("NaN")] * (len(idx)-len(temp_dict["v"][0])) for l in temp_dict["v"]]
+            if temp_dict["label"] == "Temperature Range (°F)":
+                plt.fill_between(idx, yvals[0][: len(idx)], yvals[1][: len(idx)], step="mid", alpha=temp_dict["alpha"], color=temp_dict["c"], label=temp_dict["label"])
+            else:
+                for i in range(2):
+                    plt.step(idx, yvals[i], where="mid", linestyle='--', label=temp_dict["label"] if i == 0 else None, alpha=.3, color="black")
         plt.xticks(ticks=idx, labels=time_range)
+        plt.title(f"Daily Weather Forecast for {weather_dict['name']}")
     plt.xlim(0, np.max(idx))
     plt.ylim(0, 100)
     plt.yticks(range(0, 101, 10))
     plt.grid(True)
     plt.legend(loc="upper right")
+    plt.title(f"{title_str} Weather Forecast for {weather_dict['name']}")
     plt.show()
