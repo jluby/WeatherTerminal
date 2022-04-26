@@ -1,13 +1,13 @@
 import re
+import warnings
 from datetime import date, datetime, timedelta
 
-import pandas as pd
-import requests
-from parse import *
-import warnings
-
 import noaa_coops as nc
-import timezonefinder, pytz
+import pandas as pd
+import pytz
+import requests
+import timezonefinder
+from parse import *
 
 hour_attrs = [
     "validTimeLocal",
@@ -41,24 +41,32 @@ def pad(s, l=8):
     else:
         return s
 
+
 def get_weather_hourly(soup):
     # get loc where time in list and append all values to obs
-    start_loc = re.search(r"{}".format("getSunV3HourlyForecastWithHeadersUrlConfig"), soup).end(0)
+    start_loc = re.search(
+        r"{}".format("getSunV3HourlyForecastWithHeadersUrlConfig"), soup
+    ).end(0)
     search_str = soup[start_loc : start_loc + 15000]
     weather_dict = {k: None for k in hour_attrs}
     for a in hour_attrs:
         match = re.search(r'"{}\\":\[(.*?)\],'.format(a), search_str)
         if match:
             obs_list = [x.strip('"\\') for x in match.group(1).split(",")]
-            if a not in ["validTimeLocal", "precipType", "windDirectionCardinal"]:
+            if a not in [
+                "validTimeLocal",
+                "precipType",
+                "windDirectionCardinal",
+            ]:
                 obs_list = [float(x) for x in obs_list]
             weather_dict[a] = obs_list
     weather_dict["validTimeLocal"] = [
         datetime.strptime(x[:19], "%Y-%m-%dT%H:%M:%S")
         for x in weather_dict["validTimeLocal"]
     ]
-    
+
     return weather_dict
+
 
 def get_weather_hourly_h(soup):
     time_start = datetime.combine(date.today(), datetime.min.time())
@@ -91,6 +99,7 @@ def get_weather_hourly_h(soup):
 
     return weather_dict
 
+
 def get_weather_daily(soup):
     start_loc = re.search(
         r"getSunV3DailyForecastWithHeadersUrlConfig", soup
@@ -103,7 +112,10 @@ def get_weather_daily(soup):
             obs_list = [x.strip('"\\') for x in match[1].split(",")]
             if a not in ["precipType", "windDirectionCardinal"]:
                 obs_list = [float(x) if x != "null" else x for x in obs_list]
-            if a not in ["calendarDayTemperatureMax", "calendarDayTemperatureMin"]:
+            if a not in [
+                "calendarDayTemperatureMax",
+                "calendarDayTemperatureMin",
+            ]:
                 obs_list = obs_list[::2]
             obs[a] = obs_list
     return obs
@@ -120,7 +132,8 @@ def process_by_time_hourly(soup, header, times):
             list_str = match.group(1)
             unordered_obs[a] = (
                 [x.strip('"\\') for x in list_str.split(",")]
-                if a in ["validTimeLocal", "precipType", "windDirectionCardinal"]
+                if a
+                in ["validTimeLocal", "precipType", "windDirectionCardinal"]
                 else [float(x) for x in list_str.split(",")]
             )
     unordered_obs["validTimeLocal"] = [
@@ -212,31 +225,43 @@ def get_historical_temperatures(soup, d):
 
     return out_dict
 
+
 def get_tides(loc_config, d):
     station = nc.Station(loc_config["tide_station"])
     tf = timezonefinder.TimezoneFinder()
 
-    #try:
+    # try:
     tides = station.get_data(
-        begin_date= (date.today() - timedelta(days=1)).strftime("%Y%m%d"),
-        end_date= (date.today() + timedelta(days=d["n_days"]+1)).strftime("%Y%m%d"),
+        begin_date=(date.today() - timedelta(days=1)).strftime("%Y%m%d"),
+        end_date=(date.today() + timedelta(days=d["n_days"] + 1)).strftime(
+            "%Y%m%d"
+        ),
         product="predictions",
         datum="MLLW",
         units="metric",
-        time_zone="gmt").reset_index()
-    #except:
+        time_zone="gmt",
+    ).reset_index()
+    # except:
     #    warnings.warn(f"No valid datum value for MLLW ***station={tide_station}")
     #    return {}
 
-    home_timezone_str = tf.certain_timezone_at(lat=loc_config["lat_lon"][0], lng=loc_config["lat_lon"][1])
-    tides["date_time"] = tides["date_time"].dt.tz_localize("GMT").dt.tz_convert(home_timezone_str).dt.tz_localize(None)
+    home_timezone_str = tf.certain_timezone_at(
+        lat=loc_config["lat_lon"][0], lng=loc_config["lat_lon"][1]
+    )
+    tides["date_time"] = (
+        tides["date_time"]
+        .dt.tz_localize("GMT")
+        .dt.tz_convert(home_timezone_str)
+        .dt.tz_localize(None)
+    )
 
     tide_dict = {
         "local_time": [x.to_pydatetime() for x in tides["date_time"]],
-        "water_level": tides["predicted_wl"].to_list()
+        "water_level": tides["predicted_wl"].to_list(),
     }
-    
+
     return tide_dict
+
 
 def Soup(url):
     print(requests.get(url))

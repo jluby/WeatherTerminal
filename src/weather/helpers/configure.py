@@ -9,7 +9,9 @@ config_path = f"{PKG_PATH}/.config/config.json"
 def timed_sleep(t=1):
     time.sleep(t)
 
+
 halftab = " " * 4
+
 
 def reformat(string: str, input_type=None):
     """Reformat text inputs depending on type."""
@@ -21,6 +23,7 @@ def reformat(string: str, input_type=None):
     if input_type == "input":
         newstring += "\t"
     return newstring
+
 
 def set_entry_size_manual(height, width):
     """Set terminal window size."""

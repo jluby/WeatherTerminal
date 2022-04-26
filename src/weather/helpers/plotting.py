@@ -7,8 +7,10 @@ import plotext
 
 from weather.helpers.configure import set_entry_size_manual
 
+
 def normalize(series):
-    return (series - np.min(series))/(np.max(series) - min(series))*100
+    return (series - np.min(series)) / (np.max(series) - min(series)) * 100
+
 
 def my_step(yvals, label, idx):
     if label == "precip":
@@ -80,6 +82,7 @@ def plot_terminal(weather_dict, d):
     plotext.show()
     set_entry_size_manual(height=41, width=154)
 
+
 def define_marker(windDirection):
     if windDirection == "N":
         return "$\u2B06$"
@@ -104,9 +107,9 @@ def plot_matplot(weather_dict, d):
     import matplotlib.pyplot as plt
 
     plt.rcParams["figure.figsize"] = (20, 7)
-    plt.rcParams['font.family'] = 'sans-serif'
-    plt.rcParams['font.serif'] = 'Helvetica Neue'
-    plt.rcParams['font.size'] = 8
+    plt.rcParams["font.family"] = "sans-serif"
+    plt.rcParams["font.serif"] = "Helvetica Neue"
+    plt.rcParams["font.size"] = 8
 
     if d["n_days"] <= 2:
         title_str = "Hourly"
@@ -125,48 +128,121 @@ def plot_matplot(weather_dict, d):
         else:
             time_range = weather_dict["validTimeLocal"]
         plot_dicts = [
-                {"v": weather_dict["temperature"], "c": "#FF3838", "label": "Temperature (°F)"},
-                {"v": weather_dict["temperatureFeelsLike"], "c": "#FFB338", "label": "Temperature Feels Like (°F)"},
-                {"v": weather_dict["precipChance"], "c": "#4A5CFF", "label": "Precipitation Chance (%)"},
-                {"v": weather_dict["cloudCover"], "c": "#A912E0", "label": "Cloud Cover (%)"},
-                {"v": weather_dict["windSpeed"], "c": "#3FBE34", "label": "Wind Speed (mph)"}
+            {
+                "v": weather_dict["temperature"],
+                "c": "#FF3838",
+                "label": "Temperature (°F)",
+            },
+            {
+                "v": weather_dict["temperatureFeelsLike"],
+                "c": "#FFB338",
+                "label": "Temperature Feels Like (°F)",
+            },
+            {
+                "v": weather_dict["precipChance"],
+                "c": "#4A5CFF",
+                "label": "Precipitation Chance (%)",
+            },
+            {
+                "v": weather_dict["cloudCover"],
+                "c": "#A912E0",
+                "label": "Cloud Cover (%)",
+            },
+            {
+                "v": weather_dict["windSpeed"],
+                "c": "#3FBE34",
+                "label": "Wind Speed (mph)",
+            },
         ]
         idx = [i for i in range(len(time_range))]
         for plot_dict in plot_dicts:
-            plot_dict["v"] = plot_dict["v"] + [float("NaN")] * (len(idx)-len(plot_dict["v"]))
+            plot_dict["v"] = plot_dict["v"] + [float("NaN")] * (
+                len(idx) - len(plot_dict["v"])
+            )
             if plot_dict["label"] != "Wind Speed (mph)":
-                plt.step(idx, plot_dict["v"][: len(idx)], alpha=0.8, where="mid", color=plot_dict["c"], label=plot_dict["label"])
+                plt.step(
+                    idx,
+                    plot_dict["v"][: len(idx)],
+                    alpha=0.8,
+                    where="mid",
+                    color=plot_dict["c"],
+                    label=plot_dict["label"],
+                )
             else:
-                plt.plot([], [], color=plot_dict["c"], marker=define_marker("N"), linestyle='None',
-                          markersize=5, label='Wind Speed (mph)')
+                plt.plot(
+                    [],
+                    [],
+                    color=plot_dict["c"],
+                    marker=define_marker("N"),
+                    linestyle="None",
+                    markersize=5,
+                    label="Wind Speed (mph)",
+                )
                 for i in idx:
-                    plt.plot(i, plot_dict["v"][i], color=plot_dict["c"], marker=define_marker(weather_dict["windDirectionCardinal"][i]))
+                    plt.plot(
+                        i,
+                        plot_dict["v"][i],
+                        color=plot_dict["c"],
+                        marker=define_marker(
+                            weather_dict["windDirectionCardinal"][i]
+                        ),
+                    )
         xticks = [datetime.strftime(x, "%I:%M") for x in time_range]
-        plt.xticks(ticks=idx[::2], labels=[x if i%2 == 0 else None for i,x in enumerate(xticks[::2])])
-        sunrise_diffs = [(m - time_range[0]).total_seconds() / 3600 for m in weather_dict["sunriseTimeLocal"]]
-        sunset_diffs = [(m - time_range[0]).total_seconds() / 3600 for m in weather_dict["sunsetTimeLocal"]]
+        plt.xticks(
+            ticks=idx[::2],
+            labels=[
+                x if i % 2 == 0 else None for i, x in enumerate(xticks[::2])
+            ],
+        )
+        sunrise_diffs = [
+            (m - time_range[0]).total_seconds() / 3600
+            for m in weather_dict["sunriseTimeLocal"]
+        ]
+        sunset_diffs = [
+            (m - time_range[0]).total_seconds() / 3600
+            for m in weather_dict["sunsetTimeLocal"]
+        ]
         plt.vlines(
-            sunrise_diffs, ymin=0, ymax=100, alpha=0.8, linestyles=":", color="gold"
+            sunrise_diffs,
+            ymin=0,
+            ymax=100,
+            alpha=0.8,
+            linestyles=":",
+            color="gold",
         )
         plt.vlines(
-            sunset_diffs, ymin=0, ymax=100, alpha=0.8, linestyles=":", color="#FFC838"
+            sunset_diffs,
+            ymin=0,
+            ymax=100,
+            alpha=0.8,
+            linestyles=":",
+            color="#FFC838",
         )
         night_periods = (
-            [(sunrise_diffs[0]-12, sunrise_diffs[0])] + 
-            [(sunset_diffs[i], sunrise_diffs[i+1]) for i in range(len(sunset_diffs)-1)] +
-            [(sunset_diffs[-1], sunset_diffs[-1]+12)]
-            )
+            [(sunrise_diffs[0] - 12, sunrise_diffs[0])]
+            + [
+                (sunset_diffs[i], sunrise_diffs[i + 1])
+                for i in range(len(sunset_diffs) - 1)
+            ]
+            + [(sunset_diffs[-1], sunset_diffs[-1] + 12)]
+        )
         for p in night_periods:
             # add shading to nighttime
-            plt.axvspan(p[0], p[1], alpha=.1, color='black')
+            plt.axvspan(p[0], p[1], alpha=0.1, color="black")
         if "water_level" in weather_dict.keys():
-            tides = {"rel_time":[], "water_level":[]}
+            tides = {"rel_time": [], "water_level": []}
             for i, t in enumerate(weather_dict["local_time"]):
                 if t >= time_range[0] and t <= time_range[-1]:
-                    rel_time = (t - time_range[0]).total_seconds()/3600
-                    tides["rel_time"].append(rel_time); tides["water_level"].append(weather_dict["water_level"][i])
+                    rel_time = (t - time_range[0]).total_seconds() / 3600
+                    tides["rel_time"].append(rel_time)
+                    tides["water_level"].append(weather_dict["water_level"][i])
             tides["water_level"] = normalize(tides["water_level"])
-            plt.plot(tides["rel_time"], tides["water_level"], label="Water Level (Relative %)", alpha=.2)
+            plt.plot(
+                tides["rel_time"],
+                tides["water_level"],
+                label="Water Level (Relative %)",
+                alpha=0.2,
+            )
     else:
         title_str = "Daily"
         today = date.today()
@@ -175,32 +251,102 @@ def plot_matplot(weather_dict, d):
             for i in range(d["n_days"])
         ]
         plot_dicts = [
-                {"v": weather_dict["precipChance"], "c": "#4A5CFF", "label": "Precipitation Chance (%)"},
-                {"v": weather_dict["cloudCover"], "c": "#A912E0", "label": "Cloud Cover (%)"},
-                {"v": weather_dict["windSpeed"], "c": "#3FBE34", "label": "Wind Speed (mph)"}
+            {
+                "v": weather_dict["precipChance"],
+                "c": "#4A5CFF",
+                "label": "Precipitation Chance (%)",
+            },
+            {
+                "v": weather_dict["cloudCover"],
+                "c": "#A912E0",
+                "label": "Cloud Cover (%)",
+            },
+            {
+                "v": weather_dict["windSpeed"],
+                "c": "#3FBE34",
+                "label": "Wind Speed (mph)",
+            },
         ]
         idx = [i for i in range(len(time_range))]
         for plot_dict in plot_dicts:
-            yvals = [v if v != "null" else float("NaN") for v in plot_dict["v"]]
-            yvals = yvals + [float("NaN")] * (len(idx)-len(yvals))
+            yvals = [
+                v if v != "null" else float("NaN") for v in plot_dict["v"]
+            ]
+            yvals = yvals + [float("NaN")] * (len(idx) - len(yvals))
             if plot_dict["label"] != "Wind Speed (mph)":
-                plt.step(idx, yvals[: len(idx)], alpha=0.8, where="mid", color=plot_dict["c"], label=plot_dict["label"])
+                plt.step(
+                    idx,
+                    yvals[: len(idx)],
+                    alpha=0.8,
+                    where="mid",
+                    color=plot_dict["c"],
+                    label=plot_dict["label"],
+                )
             else:
-                plt.plot([], [], color=plot_dict["c"], marker=define_marker("N"), linestyle='None',
-                          label='Wind Speed (mph)')
+                plt.plot(
+                    [],
+                    [],
+                    color=plot_dict["c"],
+                    marker=define_marker("N"),
+                    linestyle="None",
+                    label="Wind Speed (mph)",
+                )
                 for i in idx:
-                    plt.plot(i, yvals[i], color=plot_dict["c"], marker=define_marker(weather_dict["windDirectionCardinal"][i]))
+                    plt.plot(
+                        i,
+                        yvals[i],
+                        color=plot_dict["c"],
+                        marker=define_marker(
+                            weather_dict["windDirectionCardinal"][i]
+                        ),
+                    )
         temperature_dicts = [
-            {"v": [weather_dict["calendarDayTemperatureMin"], weather_dict["calendarDayTemperatureMax"]], "c": "#6ED322", "label": "Temperature Range (°F)", "alpha": .7},
-            {"v": [weather_dict["temperatureAverageMin"], weather_dict["temperatureAverageMax"]], "c": "#F7F957", "label": "Historical Average Temperature Range (°F)", "alpha": .1}
+            {
+                "v": [
+                    weather_dict["calendarDayTemperatureMin"],
+                    weather_dict["calendarDayTemperatureMax"],
+                ],
+                "c": "#6ED322",
+                "label": "Temperature Range (°F)",
+                "alpha": 0.7,
+            },
+            {
+                "v": [
+                    weather_dict["temperatureAverageMin"],
+                    weather_dict["temperatureAverageMax"],
+                ],
+                "c": "#F7F957",
+                "label": "Historical Average Temperature Range (°F)",
+                "alpha": 0.1,
+            },
         ]
         for temp_dict in temperature_dicts:
-            yvals = [[v if v != "null" else float("NaN") for v in l] + [float("NaN")] * (len(idx)-len(temp_dict["v"][0])) for l in temp_dict["v"]]
+            yvals = [
+                [v if v != "null" else float("NaN") for v in l]
+                + [float("NaN")] * (len(idx) - len(temp_dict["v"][0]))
+                for l in temp_dict["v"]
+            ]
             if temp_dict["label"] == "Temperature Range (°F)":
-                plt.fill_between(idx, yvals[0][: len(idx)], yvals[1][: len(idx)], step="mid", alpha=temp_dict["alpha"], color=temp_dict["c"], label=temp_dict["label"])
+                plt.fill_between(
+                    idx,
+                    yvals[0][: len(idx)],
+                    yvals[1][: len(idx)],
+                    step="mid",
+                    alpha=temp_dict["alpha"],
+                    color=temp_dict["c"],
+                    label=temp_dict["label"],
+                )
             else:
                 for i in range(2):
-                    plt.step(idx, yvals[i], where="mid", linestyle='--', label=temp_dict["label"] if i == 0 else None, alpha=.3, color="black")
+                    plt.step(
+                        idx,
+                        yvals[i],
+                        where="mid",
+                        linestyle="--",
+                        label=temp_dict["label"] if i == 0 else None,
+                        alpha=0.3,
+                        color="black",
+                    )
         plt.xticks(ticks=idx, labels=time_range)
         plt.title(f"Daily Weather Forecast for {weather_dict['name']}")
     plt.xlim(0, np.max(idx))
