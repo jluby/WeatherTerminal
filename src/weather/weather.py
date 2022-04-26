@@ -6,20 +6,17 @@
 # TODO: print #s in daily
 # TODO: allow subsetting for rain/clouds, temperature, and wind/tides
 # TODO: lighter gridlines at 2 hour marks for hourly
+# TODO: add some kind of location label for all plots
 
 # base imports
 import argparse
 import json
-from multiprocessing.sharedctypes import Value
-import re
 import warnings
-from contextlib import suppress
-from pathlib import Path
 
 import requests
 
 from weather.helpers import plotting, scrape
-from weather.helpers.configure import PKG_PATH, config_path, init_config, timed_sleep, reformat
+from weather.helpers.configure import PKG_PATH, reformat
 
 def main():
     config = json.load(open(f"{PKG_PATH}/config.json", "r"))
