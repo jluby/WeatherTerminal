@@ -4,9 +4,9 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import requests
 from parse import *
-import tidetable
+import warnings
 
-from weather.helpers.tides import haversine
+import noaa_coops as nc
 
 hour_attrs = [
     "validTimeLocal",
@@ -211,9 +211,20 @@ def get_historical_temperatures(soup, d):
 
     return out_dict
 
-def get_tides(tide_station):
-    table = tidetable.get(tide_station)
-    print(table)
+def get_tides(tide_station, d):
+    station = nc.Station(tide_station)
+    try:
+        df_water_levels = station.get_data(
+            begin_date=date.today().strftime("%Y%m%d"),
+            end_date= (date.today() + timedelta(days=d["days"])).strftime("%Y%m%d"),
+            product="water_level",
+            datum="MLLW",
+            units="metric",
+            time_zone="gmt")
+    except:
+        warnings.warn(f"No valid datum value for MLLW ***station={tide_station}")
+        return {}
+    print(df_water_levels)
     exit()
 
 def Soup(url):

@@ -99,10 +99,8 @@ def define_marker(windDirection):
 def plot_matplot(weather_dict, d):
     """Plot to standard matplotlib output."""
     import matplotlib.pyplot as plt
-    import matplotlib.lines as mlines
 
     plt.rcParams["figure.figsize"] = (20, 7)
-    handles = []
 
     if d["n_days"] <= 2:
         if d["d"]:
