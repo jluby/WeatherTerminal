@@ -5,7 +5,6 @@ import pandas as pd
 import requests
 from parse import *
 import tidetable
-from weather.helpers.configure import PKG_PATH
 
 from weather.helpers.tides import haversine
 
@@ -212,8 +211,10 @@ def get_historical_temperatures(soup, d):
 
     return out_dict
 
-def get_tides(loc_config):
-    pass
+def get_tides(tide_station):
+    table = tidetable.get(tide_station)
+    print(table)
+    exit()
 
 def Soup(url):
     print(requests.get(url))

@@ -19,7 +19,7 @@ def my_step(yvals, label, idx):
     plotext.plot(xvals, yvals, label=label)
 
 
-def plot_terminal(weather_dict, sun_dict, d):
+def plot_terminal(weather_dict, d):
     """Plot to terminal."""
 
     if d["n_days"] <= 2:
@@ -43,10 +43,10 @@ def plot_terminal(weather_dict, sun_dict, d):
                 my_step(yvals, label=label, idx=idx)
         xticks = [datetime.strftime(x, "%I:%M") for x in time_range]
         plotext.xticks(ticks=idx[::2], labels=xticks[::2])
-        for m in sun_dict["sunriseTimeLocal"]:
+        for m in weather_dict["sunriseTimeLocal"]:
             m = (m - time_range[0]).total_seconds() / 3600
             plotext.vertical_line(m, color=226)
-        for m in sun_dict["sunsetTimeLocal"]:
+        for m in weather_dict["sunsetTimeLocal"]:
             m = (m - time_range[0]).total_seconds() / 3600
             plotext.vertical_line(m, color=220)
         timediff = (datetime.now() - time_range[0]).total_seconds() / 3600
@@ -96,7 +96,7 @@ def define_marker(windDirection):
         return "$\u2B0A$"
 
 
-def plot_matplot(weather_dict, sun_dict, d):
+def plot_matplot(weather_dict, d):
     """Plot to standard matplotlib output."""
     import matplotlib.pyplot as plt
     import matplotlib.lines as mlines
@@ -139,8 +139,8 @@ def plot_matplot(weather_dict, sun_dict, d):
         xticks = [datetime.strftime(x, "%I:%M") for x in time_range]
         plt.xticks(ticks=idx[::4], labels=xticks[::4])
         # plot sunrise and sunset
-        sunrise_diffs = [(m - time_range[0]).total_seconds() / 3600 for m in sun_dict["sunriseTimeLocal"]]
-        sunset_diffs = [(m - time_range[0]).total_seconds() / 3600 for m in sun_dict["sunsetTimeLocal"]]
+        sunrise_diffs = [(m - time_range[0]).total_seconds() / 3600 for m in weather_dict["sunriseTimeLocal"]]
+        sunset_diffs = [(m - time_range[0]).total_seconds() / 3600 for m in weather_dict["sunsetTimeLocal"]]
         plt.vlines(
             sunrise_diffs, ymin=0, ymax=100, alpha=0.8, linestyles=":", color="gold"
         )

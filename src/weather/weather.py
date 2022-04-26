@@ -2,7 +2,9 @@
 """Display weather forecast according to user config."""
 
 # TODO: add in tide data
-# TODO: a bit of shading for historical avg. high and low
+# TODO: get tide data automatically from lat_lon with saved data on lat/long and available station IDs
+# TODO: a bit of shading for historical avg. high and low (lower alpha than true daily values)
+# TODO: shade daily highs and lows as range instead of lines
 # TODO: print #s in daily
 # TODO: allow subsetting for rain/clouds, temperature, and wind/tides
 # TODO: lighter gridlines at 2 hour marks for hourly
@@ -119,17 +121,21 @@ def main():
         else:
             weather_dict = scrape.get_weather_hourly_h(soup)
         weather_dict = {k:v[:d["n_days"]*24] for k,v in weather_dict.items()}
+        sun_dict = scrape.get_sun(soup, d)
+        weather_dict.update(sun_dict)
     else:
+        historical_temp_dict = scrape.get_historical_temperatures(soup, d)
         weather_dict = scrape.get_weather_daily(soup)
-    sun_dict = scrape.get_sun(soup, d)
-    #tide_dict = scrape.get_tides(loc_config)
-    historical_temp_dict = scrape.get_historical_temperatures(soup, d)
+        weather_dict.update(historical_temp_dict)
+    if "tide_station" in loc_config.keys():
+        tide_dict = scrape.get_tides(loc_config["tide_station"])
+        weather_dict.update(tide_dict)
 
     if not d["print"]:
         if d["terminal"]:
-            plotting.plot_terminal(weather_dict, sun_dict, d)
+            plotting.plot_terminal(weather_dict, d)
         else:
-            plotting.plot_matplot(weather_dict, sun_dict, d)
+            plotting.plot_matplot(weather_dict, d)
 
 if __name__ == "__main__":
     main()

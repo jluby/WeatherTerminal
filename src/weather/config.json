@@ -1,7 +1,8 @@
 {
     "CHI":
     {
-        "weather_hash": "Chicago+IL?canonicalCityId=51327091448a763db3e0093b240009381d87952467e6c2ba8bad55f1328ec986"
+        "weather_hash": "Chicago+IL?canonicalCityId=51327091448a763db3e0093b240009381d87952467e6c2ba8bad55f1328ec986",
+        "tide_station": 9087044
     },
     "CIN":
     {
