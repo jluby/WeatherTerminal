@@ -15,11 +15,7 @@ def normalize(series):
 def my_step(yvals, label, idx):
     if label == "precip":
         yvals = [y[0] for y in yvals]
-    xvals = (
-        [idx[0]]
-        + [np.mean([i, i + 1]) for i in idx[:-1] for x in range(2)]
-        + [idx[-1]]
-    )
+    xvals = [idx[0]] + [np.mean([i, i + 1]) for i in idx[:-1] for x in range(2)] + [idx[-1]]
     yvals = [y for y in yvals for x in range(2)]
     plotext.plot(xvals, yvals, label=label)
 
@@ -29,13 +25,8 @@ def plot_terminal(weather_dict, d):
 
     if d["n_days"] <= 2:
         time_start = datetime.combine(date.today(), datetime.min.time())
-        time_end = datetime.combine(
-            date.today() + timedelta(days=d["n_days"]), datetime.min.time()
-        )
-        time_range = [
-            t.to_pydatetime()
-            for t in pd.date_range(time_start, time_end, freq="H")
-        ]
+        time_end = datetime.combine(date.today() + timedelta(days=d["n_days"]), datetime.min.time())
+        time_range = [t.to_pydatetime() for t in pd.date_range(time_start, time_end, freq="H")]
         idx = [i for i in range(len(time_range))]
         for label, yvals in weather_dict.items():
             if label in [
@@ -58,10 +49,7 @@ def plot_terminal(weather_dict, d):
         plotext.vertical_line(timediff, color=1)
     else:
         today = date.today()
-        time_range = [
-            calendar.day_name[(today + timedelta(days=i)).weekday()]
-            for i in range(d["n_days"])
-        ]
+        time_range = [calendar.day_name[(today + timedelta(days=i)).weekday()] for i in range(d["n_days"])]
         idx = [i for i in range(len(time_range))]
         for label, yvals in weather_dict.items():
             if label in [
@@ -115,13 +103,8 @@ def plot_matplot(weather_dict, d):
         title_str = "Hourly"
         if d["d"]:
             time_start = datetime.combine(date.today(), datetime.min.time())
-            time_end = datetime.combine(
-                date.today() + timedelta(days=d["n_days"]), datetime.min.time()
-            )
-            time_range = [
-                t.to_pydatetime()
-                for t in pd.date_range(time_start, time_end, freq="H")
-            ][:-1]
+            time_end = datetime.combine(date.today() + timedelta(days=d["n_days"]), datetime.min.time())
+            time_range = [t.to_pydatetime() for t in pd.date_range(time_start, time_end, freq="H")][:-1]
             # plot current time
             timediff = (datetime.now() - time_range[0]).total_seconds() / 3600
             plt.vlines(timediff, ymin=0, ymax=100, alpha=0.8, color="red")
@@ -156,9 +139,7 @@ def plot_matplot(weather_dict, d):
         ]
         idx = [i for i in range(len(time_range))]
         for plot_dict in plot_dicts:
-            plot_dict["v"] = plot_dict["v"] + [float("NaN")] * (
-                len(idx) - len(plot_dict["v"])
-            )
+            plot_dict["v"] = plot_dict["v"] + [float("NaN")] * (len(idx) - len(plot_dict["v"]))
             if plot_dict["label"] != "Wind Speed (mph)":
                 plt.step(
                     idx,
@@ -183,25 +164,15 @@ def plot_matplot(weather_dict, d):
                         i,
                         plot_dict["v"][i],
                         color=plot_dict["c"],
-                        marker=define_marker(
-                            weather_dict["windDirectionCardinal"][i]
-                        ),
+                        marker=define_marker(weather_dict["windDirectionCardinal"][i]),
                     )
         xticks = [datetime.strftime(x, "%I:%M") for x in time_range]
         plt.xticks(
             ticks=idx[::2],
-            labels=[
-                x if i % 2 == 0 else None for i, x in enumerate(xticks[::2])
-            ],
+            labels=[x if i % 2 == 0 else None for i, x in enumerate(xticks[::2])],
         )
-        sunrise_diffs = [
-            (m - time_range[0]).total_seconds() / 3600
-            for m in weather_dict["sunriseTimeLocal"]
-        ]
-        sunset_diffs = [
-            (m - time_range[0]).total_seconds() / 3600
-            for m in weather_dict["sunsetTimeLocal"]
-        ]
+        sunrise_diffs = [(m - time_range[0]).total_seconds() / 3600 for m in weather_dict["sunriseTimeLocal"]]
+        sunset_diffs = [(m - time_range[0]).total_seconds() / 3600 for m in weather_dict["sunsetTimeLocal"]]
         plt.vlines(
             sunrise_diffs,
             ymin=0,
@@ -220,10 +191,7 @@ def plot_matplot(weather_dict, d):
         )
         night_periods = (
             [(sunrise_diffs[0] - 12, sunrise_diffs[0])]
-            + [
-                (sunset_diffs[i], sunrise_diffs[i + 1])
-                for i in range(len(sunset_diffs) - 1)
-            ]
+            + [(sunset_diffs[i], sunrise_diffs[i + 1]) for i in range(len(sunset_diffs) - 1)]
             + [(sunset_diffs[-1], sunset_diffs[-1] + 12)]
         )
         for p in night_periods:
@@ -246,10 +214,7 @@ def plot_matplot(weather_dict, d):
     else:
         title_str = "Daily"
         today = date.today()
-        time_range = [
-            calendar.day_name[(today + timedelta(days=i)).weekday()]
-            for i in range(d["n_days"])
-        ]
+        time_range = [calendar.day_name[(today + timedelta(days=i)).weekday()] for i in range(d["n_days"])]
         plot_dicts = [
             {
                 "v": weather_dict["precipChance"],
@@ -269,9 +234,7 @@ def plot_matplot(weather_dict, d):
         ]
         idx = [i for i in range(len(time_range))]
         for plot_dict in plot_dicts:
-            yvals = [
-                v if v != "null" else float("NaN") for v in plot_dict["v"]
-            ]
+            yvals = [v if v != "null" else float("NaN") for v in plot_dict["v"]]
             yvals = yvals + [float("NaN")] * (len(idx) - len(yvals))
             if plot_dict["label"] != "Wind Speed (mph)":
                 plt.step(
@@ -296,9 +259,7 @@ def plot_matplot(weather_dict, d):
                         i,
                         yvals[i],
                         color=plot_dict["c"],
-                        marker=define_marker(
-                            weather_dict["windDirectionCardinal"][i]
-                        ),
+                        marker=define_marker(weather_dict["windDirectionCardinal"][i]),
                     )
         temperature_dicts = [
             {
@@ -322,8 +283,7 @@ def plot_matplot(weather_dict, d):
         ]
         for temp_dict in temperature_dicts:
             yvals = [
-                [v if v != "null" else float("NaN") for v in l]
-                + [float("NaN")] * (len(idx) - len(temp_dict["v"][0]))
+                [v if v != "null" else float("NaN") for v in l] + [float("NaN")] * (len(idx) - len(temp_dict["v"][0]))
                 for l in temp_dict["v"]
             ]
             if temp_dict["label"] == "Temperature Range (°F)":

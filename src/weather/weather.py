@@ -60,9 +60,7 @@ def main():
     d = vars(parser.parse_args())
 
     if len(config) is 0:
-        raise ValueError(
-            reformat("No config yet specified.", input_type="error")
-        )
+        raise ValueError(reformat("No config yet specified.", input_type="error"))
     elif d["alias"] is None:
         loc_config = config[list(config.keys())[0]]
     else:
@@ -79,12 +77,8 @@ def main():
 
     soup = ""
     for page in ["today", "hourbyhour", "monthly"]:
-        soup += requests.get(
-            f"https://weather.com/weather/{page}/l/{loc_config['weather_hash']}"
-        ).text
-    lat_long_str = re.search(
-        r'"latitude\\":(.*?),\\"longitude\\":(.*?),', soup
-    )
+        soup += requests.get(f"https://weather.com/weather/{page}/l/{loc_config['weather_hash']}").text
+    lat_long_str = re.search(r'"latitude\\":(.*?),\\"longitude\\":(.*?),', soup)
     loc_config["lat_lon"] = (
         float(lat_long_str.group(1)),
         float(lat_long_str.group(2)),
@@ -95,9 +89,7 @@ def main():
             weather_dict = scrape.get_weather_hourly(soup)
         else:
             weather_dict = scrape.get_weather_hourly_h(soup)
-        weather_dict = {
-            k: v[: d["n_days"] * 24] for k, v in weather_dict.items()
-        }
+        weather_dict = {k: v[: d["n_days"] * 24] for k, v in weather_dict.items()}
         sun_dict = scrape.get_sun(soup, d)
         weather_dict.update(sun_dict)
     else:
@@ -108,13 +100,7 @@ def main():
         tide_dict = scrape.get_tides(loc_config, d)
         weather_dict.update(tide_dict)
 
-    weather_dict["name"] = (
-        re.search(
-            r"Hourly Weather Forecast for(.*?)- The Weather Channel", soup
-        )
-        .group(1)
-        .strip()
-    )
+    weather_dict["name"] = re.search(r"Hourly Weather Forecast for(.*?)- The Weather Channel", soup).group(1).strip()
 
     if d["terminal"]:
         plotting.plot_terminal(weather_dict, d)

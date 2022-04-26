@@ -44,9 +44,7 @@ def pad(s, l=8):
 
 def get_weather_hourly(soup):
     # get loc where time in list and append all values to obs
-    start_loc = re.search(
-        r"{}".format("getSunV3HourlyForecastWithHeadersUrlConfig"), soup
-    ).end(0)
+    start_loc = re.search(r"{}".format("getSunV3HourlyForecastWithHeadersUrlConfig"), soup).end(0)
     search_str = soup[start_loc : start_loc + 15000]
     weather_dict = {k: None for k in hour_attrs}
     for a in hour_attrs:
@@ -61,8 +59,7 @@ def get_weather_hourly(soup):
                 obs_list = [float(x) for x in obs_list]
             weather_dict[a] = obs_list
     weather_dict["validTimeLocal"] = [
-        datetime.strptime(x[:19], "%Y-%m-%dT%H:%M:%S")
-        for x in weather_dict["validTimeLocal"]
+        datetime.strptime(x[:19], "%Y-%m-%dT%H:%M:%S") for x in weather_dict["validTimeLocal"]
     ]
 
     return weather_dict
@@ -70,22 +67,14 @@ def get_weather_hourly(soup):
 
 def get_weather_hourly_h(soup):
     time_start = datetime.combine(date.today(), datetime.min.time())
-    time_end = datetime.combine(
-        date.today() + timedelta(days=2), datetime.min.time()
-    )
+    time_end = datetime.combine(date.today() + timedelta(days=2), datetime.min.time())
 
     time_range = pd.date_range(time_start, time_end, freq="H")
 
     past_times = [t.to_pydatetime() for t in time_range if t < datetime.now()]
-    forecast_times = [
-        t.to_pydatetime() for t in time_range if t > datetime.now()
-    ]
-    historical_obs = process_by_time_hourly(
-        soup, "getSunV3HistoricalOneDayHourlyConditionsUrlConfig", past_times
-    )
-    forecast_obs = process_by_time_hourly(
-        soup, "getSunV3HourlyForecastWithHeadersUrlConfig", forecast_times
-    )
+    forecast_times = [t.to_pydatetime() for t in time_range if t > datetime.now()]
+    historical_obs = process_by_time_hourly(soup, "getSunV3HistoricalOneDayHourlyConditionsUrlConfig", past_times)
+    forecast_obs = process_by_time_hourly(soup, "getSunV3HourlyForecastWithHeadersUrlConfig", forecast_times)
 
     weather_dict = {k: [] for k in hour_attrs}
     for k in weather_dict.keys():
@@ -93,17 +82,13 @@ def get_weather_hourly_h(soup):
             if k in obs_dict.keys() and obs_dict[k] is not None:
                 weather_dict[k] += obs_dict[k]
             else:
-                weather_dict[k] += [
-                    None for i in range(len(obs_dict["validTimeLocal"]))
-                ]
+                weather_dict[k] += [None for i in range(len(obs_dict["validTimeLocal"]))]
 
     return weather_dict
 
 
 def get_weather_daily(soup):
-    start_loc = re.search(
-        r"getSunV3DailyForecastWithHeadersUrlConfig", soup
-    ).end(0)
+    start_loc = re.search(r"getSunV3DailyForecastWithHeadersUrlConfig", soup).end(0)
     search_str = soup[start_loc : start_loc + 30000]
     obs = {k: None for k in day_attrs}
     for a in day_attrs:
@@ -132,13 +117,11 @@ def process_by_time_hourly(soup, header, times):
             list_str = match.group(1)
             unordered_obs[a] = (
                 [x.strip('"\\') for x in list_str.split(",")]
-                if a
-                in ["validTimeLocal", "precipType", "windDirectionCardinal"]
+                if a in ["validTimeLocal", "precipType", "windDirectionCardinal"]
                 else [float(x) for x in list_str.split(",")]
             )
     unordered_obs["validTimeLocal"] = [
-        datetime.strptime(x[:19], "%Y-%m-%dT%H:%M:%S")
-        for x in unordered_obs["validTimeLocal"]
+        datetime.strptime(x[:19], "%Y-%m-%dT%H:%M:%S") for x in unordered_obs["validTimeLocal"]
     ]
 
     ordered_obs = {k: [] for k in hour_attrs if unordered_obs[k] is not None}
@@ -160,14 +143,8 @@ def process_current_weather(soup, header):
         match = re.search(r'"{}\\":(.*?),'.format(a), search_str)
         if match:
             match_str = match.group(1)
-            obs[a] = (
-                [match_str.strip('"\\')]
-                if a in ["validTimeLocal", "precipType"]
-                else [float(match_str)]
-            )
-    obs["validTimeLocal"] = [
-        datetime.strptime(obs["validTimeLocal"][0][:19], "%Y-%m-%dT%H:%M:%S")
-    ]
+            obs[a] = [match_str.strip('"\\')] if a in ["validTimeLocal", "precipType"] else [float(match_str)]
+    obs["validTimeLocal"] = [datetime.strptime(obs["validTimeLocal"][0][:19], "%Y-%m-%dT%H:%M:%S")]
 
     return obs
 
@@ -175,19 +152,14 @@ def process_current_weather(soup, header):
 def get_sun(soup, d):
 
     # get loc where time in list and append all values to obs
-    start_loc = re.search(
-        r"getSunV3DailyForecastWithHeadersUrlConfig", soup
-    ).end(0)
+    start_loc = re.search(r"getSunV3DailyForecastWithHeadersUrlConfig", soup).end(0)
     search_str = soup[start_loc : start_loc + 15000]
     attrs = ["sunriseTimeLocal", "sunsetTimeLocal"]
     sun_dict = {k: None for k in attrs}
     for a in attrs:
         match = re.search(r'"{}\\":\[(.*?)\],'.format(a), search_str)
         list_str = match.group(1)
-        sun_dict[a] = [
-            datetime.strptime(x.strip('"\\')[:19], "%Y-%m-%dT%H:%M:%S")
-            for x in list_str.split(",")
-        ][:3]
+        sun_dict[a] = [datetime.strptime(x.strip('"\\')[:19], "%Y-%m-%dT%H:%M:%S") for x in list_str.split(",")][:3]
 
     return sun_dict
 
@@ -204,14 +176,10 @@ def get_historical_temperatures(soup, d):
         "temperatureRecordMax",
         "temperatureRecordMin",
     ]:
-        value_str = re.search(
-            r'"{}\\":\[(.*?)\]'.format(temp_obs), search_str
-        ).group(1)
+        value_str = re.search(r'"{}\\":\[(.*?)\]'.format(temp_obs), search_str).group(1)
         if temp_obs == "almanacRecordDate":
             temp_dict[temp_obs] = [
-                datetime.strptime(
-                    x.strip('"\\') + str(date.today().year), "%m%d%Y"
-                ).date()
+                datetime.strptime(x.strip('"\\') + str(date.today().year), "%m%d%Y").date()
                 for x in value_str.split(",")
             ]
         else:
@@ -233,9 +201,7 @@ def get_tides(loc_config, d):
     # try:
     tides = station.get_data(
         begin_date=(date.today() - timedelta(days=1)).strftime("%Y%m%d"),
-        end_date=(date.today() + timedelta(days=d["n_days"] + 1)).strftime(
-            "%Y%m%d"
-        ),
+        end_date=(date.today() + timedelta(days=d["n_days"] + 1)).strftime("%Y%m%d"),
         product="predictions",
         datum="MLLW",
         units="metric",
@@ -245,15 +211,8 @@ def get_tides(loc_config, d):
     #    warnings.warn(f"No valid datum value for MLLW ***station={tide_station}")
     #    return {}
 
-    home_timezone_str = tf.certain_timezone_at(
-        lat=loc_config["lat_lon"][0], lng=loc_config["lat_lon"][1]
-    )
-    tides["date_time"] = (
-        tides["date_time"]
-        .dt.tz_localize("GMT")
-        .dt.tz_convert(home_timezone_str)
-        .dt.tz_localize(None)
-    )
+    home_timezone_str = tf.certain_timezone_at(lat=loc_config["lat_lon"][0], lng=loc_config["lat_lon"][1])
+    tides["date_time"] = tides["date_time"].dt.tz_localize("GMT").dt.tz_convert(home_timezone_str).dt.tz_localize(None)
 
     tide_dict = {
         "local_time": [x.to_pydatetime() for x in tides["date_time"]],
