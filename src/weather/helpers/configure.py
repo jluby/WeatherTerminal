@@ -12,18 +12,6 @@ config_path = f"{PKG_PATH}/.config/config.json"
 def timed_sleep(t=1):
     time.sleep(t)
 
-
-def init_config():
-    if not os.path.isfile(config_path):
-        os.makedirs(Path(config_path).parents[0])
-        config = {}
-    else:
-        config = json.load(open(config_path, "r"))
-
-    json.dump(config, open(config_path, "w"))
-
-    return config
-
 halftab = " " * 4
 
 def reformat(string: str, input_type=None):

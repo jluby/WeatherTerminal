@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Display weather forecast according to user config."""
 
-# TODO: add in tide data - make tide a user argument to add station ID and make sure it can get tides successfully
+# TODO: add in tide data
 # TODO: a bit of shading for historical avg. high and low
-# TODO: print #s above daily, can be badly done
+# TODO: print #s in daily
 # TODO: allow subsetting for rain/clouds, temperature, and wind/tides
-# TODO: lighter gridlines at 2 hour marks
+# TODO: lighter gridlines at 2 hour marks for hourly
 
 # base imports
 import argparse
 import json
+from multiprocessing.sharedctypes import Value
 import re
 import warnings
 from contextlib import suppress
@@ -18,43 +19,10 @@ from pathlib import Path
 import requests
 
 from weather.helpers import plotting, scrape
-from weather.helpers.configure import config_path, init_config, timed_sleep, reformat
-
-def add_location(config):
-    loc_config = {}
-    alias = ""
-    while alias == "":
-        alias = input(reformat(f"Provide an alias for this location: Existing aliases are {list(config.keys())}", input_type="input"))
-        if alias.upper() in config.keys():
-            alias = ""; print("\nAlias already exists in keys.")
-            timed_sleep()
-    loc_config["loc_hash"] = ""
-    while True:
-        if loc_config["loc_hash"] == "":
-            input_str = "Please navigate to the weather.com page for the location and enter the URL below. The url should follow the format (https://weather.com/weather/[timeframe]/l/[location_hash])"
-        else:
-            input_str = "There was a problem verifying your location. Please verify your entry and try again:"
-        with suppress(ValueError):
-            loc_config["loc_hash"] = Path(
-                input(reformat(input_str, input_type="input"))
-            ).stem
-            page_text = requests.get(
-                f"https://weather.com/weather/today/l/{loc_config['loc_hash']}"
-            ).text
-            # get latitude and logitude by regex to ensure we've found a page
-            match = re.search(
-                r'"latitude\\":(.*?),\\"longitude\\":(.*?),', page_text
-            )
-        if match is not None:
-            config[alias] = loc_config
-            loc_config["lat_lon"] = (float(match.group(1)), float(match.group(2)))
-            json.dump(config, open(config_path, "w"))
-            print(f"\n\tLocation successfully initialized and saved.")
-            timed_sleep()
-            return loc_config
+from weather.helpers.configure import PKG_PATH, config_path, init_config, timed_sleep, reformat
 
 def main():
-    config = init_config()
+    config = json.load(open(f"{PKG_PATH}/config.json", "r"))
 
     # establish parser to pull in projects to view
     parser = argparse.ArgumentParser(description="Input parameters.")
@@ -101,24 +69,6 @@ def main():
         default=False,
         help="If provided, display with 'plotext' in terminal instead of 'matplotlib'.",
     )
-    parser.add_argument(
-        "-add_location",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help="If provided, add a new location.",
-    )
-    parser.add_argument(
-        "-rm_location",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help="If provided, remove an existing location.",
-    )
-    parser.add_argument(
-        "-set_default",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help="If provided, set a new default location.",
-    )
     d = vars(parser.parse_args())
 
     if d["print"]:
@@ -144,31 +94,8 @@ def main():
                 )
             )
 
-    locations = config.keys()
-    if d["rm_location"]:
-        if not locations:
-            raise ValueError(
-                reformat(
-                    "No locations yet initialized."
-                )
-            )
-        else:
-            loc = ""
-            while loc not in locations:
-                loc = input(reformat(f"Location options are {locations}. Enter the location to be removed.", input_type="input")).upper()
-            del config[loc]
-            print(f"Location {loc} successfully removed.")
-            json.dump(config, open(config_path, "w"))
-            return 1
-    if d["set_default"]:
-        loc = ""
-        while loc not in locations:
-            loc = input(reformat(f"Location options are {locations}. Enter the location to be set as default (case insensitive).", input_type="input")).upper()
-        x_dict = {k:v for k,v in config.items() if k != loc}
-        config = {loc: config[loc], **x_dict}
-        json.dump(config, open(config_path, "w"))
-    if len(config) is 0 or d["add_location"]:
-        loc_config = add_location(config)
+    if len(config) is 0:
+        raise ValueError(reformat("No config yet specified.", input_type="error"))
     elif d["alias"] is None:
         loc_config = config[list(config.keys())[0]]
     else:
@@ -186,7 +113,7 @@ def main():
     soup = ""
     for page in ["today", "hourbyhour", "monthly"]:
         soup += requests.get(
-            f"https://weather.com/weather/{page}/l/{loc_config['loc_hash']}"
+            f"https://weather.com/weather/{page}/l/{loc_config['weather_hash']}"
         ).text
 
     if d["n_days"] <= 2:
