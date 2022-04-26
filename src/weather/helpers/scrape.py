@@ -4,13 +4,17 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import requests
 from parse import *
+import tidetable
+from weather.helpers.configure import PKG_PATH
+
+from weather.helpers.tides import haversine
 
 hour_attrs = [
     "validTimeLocal",
     "precipType",
     "temperature",
     "temperatureFeelsLike",
-    "windDirection",
+    "windDirectionCardinal",
     "windSpeed",
     "relativeHumidity",
     "precipChance",
@@ -23,7 +27,7 @@ day_attrs = [
     "precipType",
     "cloudCover",
     "windSpeed",
-    "windDirection",
+    "windDirectionCardinal",
 ]
 
 
@@ -37,11 +41,29 @@ def pad(s, l=8):
     else:
         return s
 
+def get_weather_hourly(soup):
+    # get loc where time in list and append all values to obs
+    start_loc = re.search(r"{}".format("getSunV3HourlyForecastWithHeadersUrlConfig"), soup).end(0)
+    search_str = soup[start_loc : start_loc + 15000]
+    weather_dict = {k: None for k in hour_attrs}
+    for a in hour_attrs:
+        match = re.search(r'"{}\\":\[(.*?)\],'.format(a), search_str)
+        if match:
+            obs_list = [x.strip('"\\') for x in match.group(1).split(",")]
+            if a not in ["validTimeLocal", "precipType", "windDirectionCardinal"]:
+                obs_list = [float(x) for x in obs_list]
+            weather_dict[a] = obs_list
+    weather_dict["validTimeLocal"] = [
+        datetime.strptime(x[:19], "%Y-%m-%dT%H:%M:%S")
+        for x in weather_dict["validTimeLocal"]
+    ]
+    
+    return weather_dict
 
-def get_weather_hourly(soup, d):
+def get_weather_hourly_h(soup):
     time_start = datetime.combine(date.today(), datetime.min.time())
     time_end = datetime.combine(
-        date.today() + timedelta(days=d["n_days"]), datetime.min.time()
+        date.today() + timedelta(days=2), datetime.min.time()
     )
 
     time_range = pd.date_range(time_start, time_end, freq="H")
@@ -69,30 +91,21 @@ def get_weather_hourly(soup, d):
 
     return weather_dict
 
-
 def get_weather_daily(soup):
-
-    forecast_obs = process_by_time_daily(soup)
-
-    return forecast_obs
-
-
-def process_by_time_daily(soup):
     start_loc = re.search(
         r"getSunV3DailyForecastWithHeadersUrlConfig", soup
     ).end(0)
-    search_str = soup[start_loc : start_loc + 15000]
+    search_str = soup[start_loc : start_loc + 30000]
     obs = {k: None for k in day_attrs}
     for a in day_attrs:
         match = re.findall(r'"{}\\":\[(.*?)\],'.format(a), search_str)
         if match:
-            list_str = match[1] if a in ["calendarDayTemperatureMax", "calendarDayTemperatureMin"] else match[0]
-            obs_list = list_str.split(",")
-            obs[a] = (
-                [x.strip('"\\') for x in obs_list]
-                if a == "precipType"
-                else [float(x) if x != "null" else x for x in obs_list]
-            )
+            obs_list = [x.strip('"\\') for x in match[1].split(",")]
+            if a not in ["precipType", "windDirectionCardinal"]:
+                obs_list = [float(x) if x != "null" else x for x in obs_list]
+            if a not in ["calendarDayTemperatureMax", "calendarDayTemperatureMin"]:
+                obs_list = obs_list[::2]
+            obs[a] = obs_list
     return obs
 
 
@@ -107,7 +120,7 @@ def process_by_time_hourly(soup, header, times):
             list_str = match.group(1)
             unordered_obs[a] = (
                 [x.strip('"\\') for x in list_str.split(",")]
-                if a in ["validTimeLocal", "precipType"]
+                if a in ["validTimeLocal", "precipType", "windDirectionCardinal"]
                 else [float(x) for x in list_str.split(",")]
             )
     unordered_obs["validTimeLocal"] = [
@@ -161,7 +174,7 @@ def get_sun(soup, d):
         sun_dict[a] = [
             datetime.strptime(x.strip('"\\')[:19], "%Y-%m-%dT%H:%M:%S")
             for x in list_str.split(",")
-        ][: d["n_days"]]
+        ][:3]
 
     return sun_dict
 
@@ -199,6 +212,8 @@ def get_historical_temperatures(soup, d):
 
     return out_dict
 
+def get_tides(loc_config):
+    pass
 
 def Soup(url):
     print(requests.get(url))

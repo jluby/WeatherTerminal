@@ -1,10 +1,12 @@
 import json
 import os
 import time
+from datetime import date, datetime, timedelta
 from pathlib import Path
+import pandas as pd
 
-pkg_path = Path(__file__).parents[1]
-config_path = f"{pkg_path}/.config/config.json"
+PKG_PATH = Path(__file__).parents[1]
+config_path = f"{PKG_PATH}/.config/config.json"
 
 
 def timed_sleep(t=1):
@@ -13,11 +15,29 @@ def timed_sleep(t=1):
 
 def init_config():
     if not os.path.isfile(config_path):
-        config = {
-            "loc_hash": None,
-            "lat_lon": None,
-            "n_days": 1,
-            "show": ["precip", "temp", "feel", "cover"],
-        }
         os.makedirs(Path(config_path).parents[0])
-        json.dump(config, open(config_path, "w"))
+        config = {}
+    else:
+        config = json.load(open(config_path, "r"))
+
+    json.dump(config, open(config_path, "w"))
+
+    return config
+
+halftab = " " * 4
+
+def reformat(string: str, input_type=None):
+    """Reformat text inputs depending on type."""
+    string = string.replace(". ", ".@")
+    sentences = [f"{halftab}{s}" for s in string.split(sep="@")]
+    newstring = "\n"
+    for s in sentences:
+        newstring += f"{s}\n"
+    if input_type == "input":
+        newstring += "\t"
+    return newstring
+
+def set_entry_size_manual(height, width):
+    """Set terminal window size."""
+    os.system("printf '\e[3;0;0t'")
+    os.system(f"printf '\e[8;{height};{width}t'")
