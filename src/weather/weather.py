@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Display weather forecast according to user config."""
 
-# TODO: print weather type in daily
-
 # base imports
 import argparse
 import json
