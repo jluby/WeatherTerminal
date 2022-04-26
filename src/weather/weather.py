@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Display weather forecast according to user config."""
 
-# TODO: print #s in daily
-# TODO: allow subsetting for rain/clouds, temperature, and wind/tides
+# TODO: print weather type in daily
 
 # base imports
 import argparse
@@ -39,17 +38,6 @@ def main():
         action=argparse.BooleanOptionalAction,
         default=False,
         help="If provided, include today's history in hourly plotting.",
-    )
-    parser.add_argument(
-        "-show",
-        type=str,
-        nargs="?",
-        choices=[
-            "rain",
-            "temp",
-            "row",
-        ],  # rain: precipChance, cloudCover. temp: temperature, temperatureFeelsLike. row: windSpeed, windDirectionCardinal, tides
-        help="Attributes types to show.",
     )
     parser.add_argument(
         "-terminal",
