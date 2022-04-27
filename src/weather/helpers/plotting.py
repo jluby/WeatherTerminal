@@ -254,7 +254,7 @@ def plot_matplot(weather_dict, d):
                     linestyle="None",
                     label="Wind Speed (mph)",
                 )
-                for i in idx:
+                for i in idx[:len(weather_dict["windDirectionCardinal"])]:
                     plt.plot(
                         i,
                         yvals[i],
@@ -308,7 +308,7 @@ def plot_matplot(weather_dict, d):
                         color="black",
                     )
         labels = [w if w != "null" else "" for w in weather_dict["wxPhraseLong"]]
-        for i in idx:
+        for i in idx[:len(labels)]:
             plt.text(i, 101, labels[i], ha="center")
         plt.xticks(ticks=idx[:-1], labels=time_range)
         plt.title(f"Daily Weather Forecast for {weather_dict['name']}\n")
