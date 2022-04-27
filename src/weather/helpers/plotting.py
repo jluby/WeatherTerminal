@@ -306,7 +306,15 @@ def plot_matplot(weather_dict, d):
                         alpha=0.3,
                         color="black",
                     )
-        labels = [w if w != "null" else "" for w in weather_dict["wxPhraseLong"]]
+        labels = []
+        for w in weather_dict["wxPhraseLong"]:
+            if w == "null":
+                labels.append("")
+            elif len(w) > 18:
+                str_list = w.split("/")
+                labels.append(str_list[0] + "...")
+            else:
+                labels.append(w)
         for i in idx:
             plt.text(i, 101, labels[i], ha="center")
         plt.xticks(ticks=idx, labels=time_range)
