@@ -11,5 +11,9 @@
     {
         "weather_hash": "Providence+RI?canonicalCityId=6a1665f8768c283c58ad2c275c6aa9ba7b0f7225cd3e53bbf3119faf53bb929c",
         "tide_station": 8454000
+    },
+    "NYC":
+    {
+        "weather_hash": "Manhattan+NY?canonicalCityId=a701ee19c4ab71bbbe2f6ba2fe8c250913883e5ae9b8eee8b54f8efbdb3eec03"
     }
 }

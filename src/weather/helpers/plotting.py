@@ -211,6 +211,7 @@ def plot_matplot(weather_dict, d):
                 alpha=0.2,
             )
         plt.title(f"Hourly Weather Forecast for {weather_dict['name']}")
+        plt.xlim(0, np.max(idx))
     else:
         today = date.today()
         time_range = [calendar.day_name[(today + timedelta(days=i)).weekday()] for i in range(d["n_days"])]
@@ -231,16 +232,16 @@ def plot_matplot(weather_dict, d):
                 "label": "Wind Speed (mph)",
             },
         ]
-        idx = [i for i in range(len(time_range))]
+        idx = [i for i in range(len(time_range)+1)]
         for plot_dict in plot_dicts:
             yvals = [v if v != "null" else float("NaN") for v in plot_dict["v"]]
             yvals = yvals + [float("NaN")] * (len(idx) - len(yvals))
             if plot_dict["label"] != "Wind Speed (mph)":
                 plt.step(
-                    idx,
+                    [i-.5 for i in idx],
                     yvals[: len(idx)],
                     alpha=0.8,
-                    where="mid",
+                    where="post",
                     color=plot_dict["c"],
                     label=plot_dict["label"],
                 )
@@ -287,10 +288,10 @@ def plot_matplot(weather_dict, d):
             ]
             if temp_dict["label"] == "Temperature Range (°F)":
                 plt.fill_between(
-                    idx,
+                    [i-.5 for i in idx],
                     yvals[0][: len(idx)],
                     yvals[1][: len(idx)],
-                    step="mid",
+                    step="post",
                     alpha=temp_dict["alpha"],
                     color=temp_dict["c"],
                     label=temp_dict["label"],
@@ -298,28 +299,20 @@ def plot_matplot(weather_dict, d):
             else:
                 for i in range(2):
                     plt.step(
-                        idx,
+                        [i-.5 for i in idx],
                         yvals[i],
-                        where="mid",
+                        where="post",
                         linestyle="--",
                         label=temp_dict["label"] if i == 0 else None,
                         alpha=0.3,
                         color="black",
                     )
-        labels = []
-        for w in weather_dict["wxPhraseLong"]:
-            if w == "null":
-                labels.append("")
-            elif len(w) > 18:
-                str_list = w.split("/")
-                labels.append(str_list[0] + "...")
-            else:
-                labels.append(w)
+        labels = [w if w != "null" else "" for w in weather_dict["wxPhraseLong"]]
         for i in idx:
             plt.text(i, 101, labels[i], ha="center")
-        plt.xticks(ticks=idx, labels=time_range)
+        plt.xticks(ticks=idx[:-1], labels=time_range)
         plt.title(f"Daily Weather Forecast for {weather_dict['name']}\n")
-    plt.xlim(0, np.max(idx))
+        plt.xlim(0-.5, np.max(idx)-.5)
     plt.ylim(0, 100)
     plt.yticks(range(0, 101, 10))
     plt.grid(True)

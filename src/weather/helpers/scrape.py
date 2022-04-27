@@ -1,10 +1,9 @@
 import re
-import warnings
+import calendar
 from datetime import date, datetime, timedelta
 
 import noaa_coops as nc
 import pandas as pd
-import pytz
 import requests
 import timezonefinder
 from parse import *
@@ -91,11 +90,13 @@ def get_weather_hourly_h(soup):
 def get_weather_daily(soup):
     start_loc = re.search(r"getSunV3DailyForecastWithHeadersUrlConfig", soup).end(0)
     search_str = soup[start_loc : start_loc + 30000]
+    days = [x.strip('"\\') for x in re.findall(r'"dayOfWeek\\":\[(.*?)\],', search_str)[0].split(",")]
+    start_idx = days.index(calendar.day_name[date.today().weekday()])
     obs = {k: None for k in day_attrs}
     for a in day_attrs:
         match = re.findall(r'"{}\\":\[(.*?)\],'.format(a), search_str)
         if match:
-            obs_list = [x.strip('"\\') for x in match[1].split(",")]
+            obs_list = [x.strip('"\\') for x in match[1].split(",")][start_idx:]
             if a not in ["precipType", "windDirectionCardinal", "wxPhraseLong"]:
                 obs_list = [float(x) if x != "null" else x for x in obs_list]
             if a not in [
