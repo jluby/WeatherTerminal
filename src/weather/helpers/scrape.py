@@ -1,5 +1,5 @@
-import re
 import calendar
+import re
 from datetime import date, datetime, timedelta
 
 import noaa_coops as nc
@@ -27,7 +27,7 @@ day_attrs = [
     "cloudCover",
     "windSpeed",
     "windDirectionCardinal",
-    "wxPhraseLong"
+    "wxPhraseLong",
 ]
 
 

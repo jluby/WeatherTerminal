@@ -158,7 +158,7 @@ def plot_matplot(weather_dict, d):
                     markersize=5,
                     label="Wind Speed (mph)",
                 )
-                for i in idx[:len(weather_dict["windDirectionCardinal"])]:
+                for i in idx[: len(weather_dict["windDirectionCardinal"])]:
                     plt.plot(
                         i,
                         plot_dict["v"][i],
@@ -232,13 +232,13 @@ def plot_matplot(weather_dict, d):
                 "label": "Wind Speed (mph)",
             },
         ]
-        idx = [i for i in range(len(time_range)+1)]
+        idx = [i for i in range(len(time_range) + 1)]
         for plot_dict in plot_dicts:
             yvals = [v if v != "null" else float("NaN") for v in plot_dict["v"]]
             yvals = yvals + [float("NaN")] * (len(idx) - len(yvals))
             if plot_dict["label"] != "Wind Speed (mph)":
                 plt.step(
-                    [i-.5 for i in idx],
+                    [i - 0.5 for i in idx],
                     yvals[: len(idx)],
                     alpha=0.8,
                     where="post",
@@ -254,7 +254,7 @@ def plot_matplot(weather_dict, d):
                     linestyle="None",
                     label="Wind Speed (mph)",
                 )
-                for i in idx[:len(weather_dict["windDirectionCardinal"])]:
+                for i in idx[: len(weather_dict["windDirectionCardinal"])]:
                     plt.plot(
                         i,
                         yvals[i],
@@ -288,7 +288,7 @@ def plot_matplot(weather_dict, d):
             ]
             if temp_dict["label"] == "Temperature Range (°F)":
                 plt.fill_between(
-                    [i-.5 for i in idx],
+                    [i - 0.5 for i in idx],
                     yvals[0][: len(idx)],
                     yvals[1][: len(idx)],
                     step="post",
@@ -299,7 +299,7 @@ def plot_matplot(weather_dict, d):
             else:
                 for i in range(2):
                     plt.step(
-                        [i-.5 for i in idx],
+                        [i - 0.5 for i in idx],
                         yvals[i],
                         where="post",
                         linestyle="--",
@@ -308,11 +308,11 @@ def plot_matplot(weather_dict, d):
                         color="black",
                     )
         labels = [w if w != "null" else "" for w in weather_dict["wxPhraseLong"]]
-        for i in idx[:-1][:len(labels)]:
+        for i in idx[:-1][: len(labels)]:
             plt.text(i, 101, labels[i], ha="center")
         plt.xticks(ticks=idx[:-1], labels=time_range)
         plt.title(f"Daily Weather Forecast for {weather_dict['name']}\n")
-        plt.xlim(0-.5, np.max(idx)-.5)
+        plt.xlim(0 - 0.5, np.max(idx) - 0.5)
     plt.ylim(0, 100)
     plt.yticks(range(0, 101, 10))
     plt.grid(True)
