@@ -38,6 +38,12 @@ def main():
         help="If provided, include today's history in hourly plotting.",
     )
     parser.add_argument(
+        "-tide",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="If provided, plot tides when 'tide_station' has been specified in config.json.",
+    )
+    parser.add_argument(
         "-terminal",
         action=argparse.BooleanOptionalAction,
         default=False,

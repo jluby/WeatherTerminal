@@ -196,7 +196,7 @@ def plot_matplot(weather_dict, d):
         for p in night_periods:
             # add shading to nighttime
             plt.axvspan(p[0], p[1], alpha=0.1, color="black")
-        if "water_level" in weather_dict.keys():
+        if "water_level" in weather_dict.keys() and d["tide"]:
             tides = {"rel_time": [], "water_level": []}
             for i, t in enumerate(weather_dict["local_time"]):
                 if t >= time_range[0] and t <= time_range[-1]:
