@@ -13,16 +13,15 @@ import noaa_coops as nc
 import requests
 
 from weather.helpers import plotting, scrape
-from weather.helpers.configure import PKG_PATH, config_path, init_config, reformat, timed_sleep
+from weather.helpers.configure import config_path, init_config, reformat
 
 def add_location(config):
     loc_config = {}
     alias = ""
     while alias == "":
-        alias = input(reformat(f"Provide an alias for this location: Existing aliases are {list(config.keys())}", input_type="input")).upper()
+        alias = input(f"\nProvide an alias for this location: Existing aliases are:\n" + str({loc: config[loc]["name"] for loc in config.keys()}) + "\n\t").upper()
         if alias in config.keys():
-            alias = ""; print("\nAlias already exists in keys.")
-            timed_sleep()
+            alias = ""; print("\nAlias already exists in keys.\n")
     loc_config["weather_hash"] = ""; match = None
     while match is None:
         if loc_config["weather_hash"] == "":
@@ -34,7 +33,7 @@ def add_location(config):
                 input(reformat(input_str, input_type="input"))
             ).stem
             page_text = requests.get(
-                f"https://weather.com/weather/today/l/{loc_config['weather_hash']}"
+                f"https://weather.com/weather/hourly/l/{loc_config['weather_hash']}"
             ).text
             # get latitude and logitude by regex to ensure we've found a page
             match = re.search(
@@ -42,9 +41,10 @@ def add_location(config):
             )
     config[alias] = loc_config
     config[alias]["lat_lon"] = (float(match.group(1)), float(match.group(2)))
+    config[alias]["name"] = re.search(r"Hourly Weather Forecast for(.*?)- The Weather Channel", page_text).group(1).strip()
+
     json.dump(config, open(config_path, "w"))
-    print(f"\n\tLocation successfully initialized and saved.")
-    timed_sleep()
+    print(f"\n\tLocation successfully initialized and saved.\n")
             
 def add_tides(config, alias):
     station = input(f"\tEnter the 7-digit NOAA station ID for this location.\n\tStations can be found at https://tidesandcurrents.noaa.gov/")
@@ -172,11 +172,6 @@ def main():
         soup = ""
         for page in ["today", "hourbyhour", "monthly"]:
             soup += requests.get(f"https://weather.com/weather/{page}/l/{loc_config['weather_hash']}").text
-        lat_long_str = re.search(r'"latitude\\":(.*?),\\"longitude\\":(.*?),', soup)
-        loc_config["lat_lon"] = (
-            float(lat_long_str.group(1)),
-            float(lat_long_str.group(2)),
-        )
 
         if d["n_days"] <= 2:
             if not d["d"]:
@@ -194,7 +189,7 @@ def main():
             tide_dict = scrape.get_tides(loc_config, d)
             weather_dict.update(tide_dict)
 
-        weather_dict["name"] = re.search(r"Hourly Weather Forecast for(.*?)- The Weather Channel", soup).group(1).strip()
+        weather_dict["name"] = loc_config["name"]
 
         plotting.plot_matplot(weather_dict, d)
 
