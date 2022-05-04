@@ -17,9 +17,10 @@ from weather.helpers.configure import config_path, init_config, reformat
 
 def add_location(config):
     loc_config = {}
+    aliases = list(config.keys())
     alias = ""
     while alias == "":
-        alias = input(f"\nProvide an alias for this location: Existing aliases are:\n" + str({loc: config[loc]["name"] for loc in config.keys()}) + "\n\t").upper()
+        alias = input(f"\nProvide an alias for this location: Existing aliases are: {aliases}\n\t").upper()
         if alias in config.keys():
             alias = ""; print("\nAlias already exists in keys.\n")
     loc_config["weather_hash"] = ""; match = None
@@ -46,11 +47,15 @@ def add_location(config):
     json.dump(config, open(config_path, "w"))
     print(f"\n\tLocation successfully initialized and saved.\n")
             
-def add_tides(config, alias):
-    station = input(f"\tEnter the 7-digit NOAA station ID for this location.\n\tStations can be found at https://tidesandcurrents.noaa.gov/")
+def add_tides(config):
+    aliases = list(config.keys())
+    alias = ""
+    while alias.upper() not in aliases:
+        alias = input(f"\tTo which location would you like to add tides? Available aliases are: {aliases}\n\t").upper()
+    station = input(f"\n\tEnter the 7-digit NOAA station ID for this location. Stations can be found at https://tidesandcurrents.noaa.gov/\n\t")
     try:
-        station = nc.Station(int(station))
-        station.get_data(
+        nc_station = nc.Station(int(station))
+        nc_station.get_data(
             begin_date=(date.today() - timedelta(days=1)).strftime("%Y%m%d"),
             end_date=(date.today() + timedelta(days=1)).strftime("%Y%m%d"),
             product="predictions",
@@ -64,13 +69,13 @@ def add_tides(config, alias):
     
     config[alias]["tide_station"] = int(station)
     json.dump(config, open(config_path, "w"))
-    print(f"\n\tTide station successfully initialized and saved.")
+    print(f"\n\tTide station successfully initialized and saved.\n")
 
 def rm_location(config):
     aliases = list(config.keys())
     rm_loc = ""
     while rm_loc.upper() not in aliases:
-        rm_loc = input(f"\tWhich location would you like to remove? Available aliases are {aliases}\n\t").upper()
+        rm_loc = input(f"\tWhich location would you like to remove? Available aliases are: {aliases}\n\t").upper()
     del config[rm_loc]
     json.dump(config, open(config_path, "w"))
     print(f"\n\tLocation metadata successfully deleted.\n")
@@ -79,7 +84,7 @@ def set_location(config):
     aliases = list(config.keys())
     set_loc = ""
     while set_loc.upper() not in aliases:
-        set_loc = input(f"\tWhich location would you like to set as default? Available aliases are {aliases}\n\t").upper()
+        set_loc = input(f"\tWhich location would you like to set as default? Available aliases are: {aliases}\n\t").upper()
     config = {**{set_loc: config[set_loc]}, **{k:v for k,v in config.items() if k != set_loc}}
     json.dump(config, open(config_path, "w"))
     print(f"\n\tLocation successfully set as default.\n")
@@ -125,7 +130,7 @@ def main():
         "-add_tides",
         action=argparse.BooleanOptionalAction,
         default=False,
-        help="If provided, add a new location.",
+        help="If provided, add a new tide station.",
     )
     parser.add_argument(
         "-rm_location",
