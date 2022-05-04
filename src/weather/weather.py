@@ -3,17 +3,89 @@
 
 # base imports
 import argparse
+from contextlib import suppress
+from datetime import date, timedelta
 import json
+from pathlib import Path
 import re
+import noaa_coops as nc
 
 import requests
 
 from weather.helpers import plotting, scrape
-from weather.helpers.configure import PKG_PATH, reformat
+from weather.helpers.configure import PKG_PATH, config_path, init_config, reformat, timed_sleep
 
+def add_location(config):
+    loc_config = {}
+    alias = ""
+    while alias == "":
+        alias = input(reformat(f"Provide an alias for this location: Existing aliases are {list(config.keys())}", input_type="input")).upper()
+        if alias in config.keys():
+            alias = ""; print("\nAlias already exists in keys.")
+            timed_sleep()
+    loc_config["weather_hash"] = ""; match = None
+    while match is None:
+        if loc_config["weather_hash"] == "":
+            input_str = "Please navigate to the weather.com page for the location and enter the URL below. The url should follow the format (https://weather.com/weather/[timeframe]/l/[location_hash])"
+        else:
+            input_str = "There was a problem verifying your location. Please verify your entry and try again:"
+        with suppress(ValueError):
+            loc_config["weather_hash"] = Path(
+                input(reformat(input_str, input_type="input"))
+            ).stem
+            page_text = requests.get(
+                f"https://weather.com/weather/today/l/{loc_config['weather_hash']}"
+            ).text
+            # get latitude and logitude by regex to ensure we've found a page
+            match = re.search(
+                r'"latitude\\":(.*?),\\"longitude\\":(.*?),', page_text
+            )
+    config[alias] = loc_config
+    config[alias]["lat_lon"] = (float(match.group(1)), float(match.group(2)))
+    json.dump(config, open(config_path, "w"))
+    print(f"\n\tLocation successfully initialized and saved.")
+    timed_sleep()
+            
+def add_tides(config, alias):
+    station = input(f"\tEnter the 7-digit NOAA station ID for this location.\n\tStations can be found at https://tidesandcurrents.noaa.gov/")
+    try:
+        station = nc.Station(int(station))
+        station.get_data(
+            begin_date=(date.today() - timedelta(days=1)).strftime("%Y%m%d"),
+            end_date=(date.today() + timedelta(days=1)).strftime("%Y%m%d"),
+            product="predictions",
+            datum="MLLW",
+            units="metric",
+            time_zone="gmt",
+        )
+    except:
+        print(f"No valid datum value for MLLW ***station={station} Please check the station ID and try again.")
+        return 0
+    
+    config[alias]["tide_station"] = int(station)
+    json.dump(config, open(config_path, "w"))
+    print(f"\n\tTide station successfully initialized and saved.")
+
+def rm_location(config):
+    aliases = list(config.keys())
+    rm_loc = ""
+    while rm_loc.upper() not in aliases:
+        rm_loc = input(f"\tWhich location would you like to remove? Available aliases are {aliases}\n\t").upper()
+    del config[rm_loc]
+    json.dump(config, open(config_path, "w"))
+    print(f"\n\tLocation metadata successfully deleted.\n")
+
+def set_location(config):
+    aliases = list(config.keys())
+    set_loc = ""
+    while set_loc.upper() not in aliases:
+        set_loc = input(f"\tWhich location would you like to set as default? Available aliases are {aliases}\n\t").upper()
+    config = {**{set_loc: config[set_loc]}, **{k:v for k,v in config.items() if k != set_loc}}
+    json.dump(config, open(config_path, "w"))
+    print(f"\n\tLocation successfully set as default.\n")
 
 def main():
-    config = json.load(open(f"{PKG_PATH}/config.json", "r"))
+    config = init_config()
 
     # establish parser to pull in projects to view
     parser = argparse.ArgumentParser(description="Input parameters.")
@@ -44,61 +116,87 @@ def main():
         help="If provided, plot tides when 'tide_station' has been specified in config.json.",
     )
     parser.add_argument(
-        "-terminal",
+        "-add_location",
         action=argparse.BooleanOptionalAction,
         default=False,
-        help="If provided, display with 'plotext' in terminal instead of 'matplotlib'.",
+        help="If provided, add a new location.",
+    )
+    parser.add_argument(
+        "-add_tides",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="If provided, add a new location.",
+    )
+    parser.add_argument(
+        "-rm_location",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="If provided, remove a saved location.",
+    )
+    parser.add_argument(
+        "-set_location",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="If provided, set a specified saved location as default.",
     )
     d = vars(parser.parse_args())
 
-    if len(config) is 0:
-        raise ValueError(reformat("No config yet specified.", input_type="error"))
-    elif d["alias"] is None:
-        loc_config = config[list(config.keys())[0]]
+    if sum([d["add_location"], d["add_tides"], d["rm_location"], d["set_location"]]) > 1:
+        raise ValueError(reformat("Only one of -add_location, -add_tides, -rm_location, or -set_location may be provided at one time.", input_type="error"))
+    elif sum([d["add_location"], d["add_tides"], d["rm_location"], d["set_location"]]) == 1:
+        if d["add_location"]:
+            add_location(config)
+        elif d["add_tides"]:
+            add_tides(config)
+        elif d["rm_location"]:
+            rm_location(config)
+        elif d["set_location"]:
+            set_location(config)
     else:
-        d["alias"] = d["alias"].upper()
-        if d["alias"] in config.keys():
-            loc_config = config[d["alias"]]
+        if len(config) is 0:
+            raise ValueError(reformat("No config yet specified. Use -add_location argument to initialize a weather location.", input_type="error"))
+        elif d["alias"] is None:
+            loc_config = config[list(config.keys())[0]]
         else:
-            raise ValueError(
-                reformat(
-                    f"Provided alias not found in config. Available aliases are {list(config.keys())}",
-                    input_type="error",
+            d["alias"] = d["alias"].upper()
+            if d["alias"] in config.keys():
+                loc_config = config[d["alias"]]
+            else:
+                raise ValueError(
+                    reformat(
+                        f"Provided alias not found in config. Available aliases are {list(config.keys())}",
+                        input_type="error",
+                    )
                 )
-            )
 
-    soup = ""
-    for page in ["today", "hourbyhour", "monthly"]:
-        soup += requests.get(f"https://weather.com/weather/{page}/l/{loc_config['weather_hash']}").text
-    lat_long_str = re.search(r'"latitude\\":(.*?),\\"longitude\\":(.*?),', soup)
-    loc_config["lat_lon"] = (
-        float(lat_long_str.group(1)),
-        float(lat_long_str.group(2)),
-    )
+        soup = ""
+        for page in ["today", "hourbyhour", "monthly"]:
+            soup += requests.get(f"https://weather.com/weather/{page}/l/{loc_config['weather_hash']}").text
+        lat_long_str = re.search(r'"latitude\\":(.*?),\\"longitude\\":(.*?),', soup)
+        loc_config["lat_lon"] = (
+            float(lat_long_str.group(1)),
+            float(lat_long_str.group(2)),
+        )
 
-    if d["n_days"] <= 2:
-        if not d["d"]:
-            weather_dict = scrape.get_weather_hourly(soup)
+        if d["n_days"] <= 2:
+            if not d["d"]:
+                weather_dict = scrape.get_weather_hourly(soup)
+            else:
+                weather_dict = scrape.get_weather_hourly_h(soup)
+            weather_dict = {k: v[: d["n_days"] * 24] for k, v in weather_dict.items()}
+            sun_dict = scrape.get_sun(soup, d)
+            weather_dict.update(sun_dict)
         else:
-            weather_dict = scrape.get_weather_hourly_h(soup)
-        weather_dict = {k: v[: d["n_days"] * 24] for k, v in weather_dict.items()}
-        sun_dict = scrape.get_sun(soup, d)
-        weather_dict.update(sun_dict)
-    else:
-        historical_temp_dict = scrape.get_historical_temperatures(soup, d)
-        weather_dict = scrape.get_weather_daily(soup)
-        weather_dict.update(historical_temp_dict)
-    if "tide_station" in loc_config.keys():
-        tide_dict = scrape.get_tides(loc_config, d)
-        weather_dict.update(tide_dict)
+            historical_temp_dict = scrape.get_historical_temperatures(soup, d)
+            weather_dict = scrape.get_weather_daily(soup)
+            weather_dict.update(historical_temp_dict)
+        if "tide_station" in loc_config.keys():
+            tide_dict = scrape.get_tides(loc_config, d)
+            weather_dict.update(tide_dict)
 
-    weather_dict["name"] = re.search(r"Hourly Weather Forecast for(.*?)- The Weather Channel", soup).group(1).strip()
+        weather_dict["name"] = re.search(r"Hourly Weather Forecast for(.*?)- The Weather Channel", soup).group(1).strip()
 
-    if d["terminal"]:
-        plotting.plot_terminal(weather_dict, d)
-    else:
         plotting.plot_matplot(weather_dict, d)
-
 
 if __name__ == "__main__":
     main()
