@@ -7,6 +7,7 @@ from contextlib import suppress
 from datetime import date, timedelta
 import json
 from pathlib import Path
+from pprint import pprint
 import re
 import noaa_coops as nc
 
@@ -89,6 +90,11 @@ def set_location(config):
     json.dump(config, open(config_path, "w"))
     print(f"\n\tLocation successfully set as default.\n")
 
+def list_locations(config):
+    print(f"\nAvailable locations are:")
+    pprint({alias:config[alias]["name"] for alias in config.keys()})
+    print("")
+
 def main():
     config = init_config()
 
@@ -144,11 +150,17 @@ def main():
         default=False,
         help="If provided, set a specified saved location as default.",
     )
+    parser.add_argument(
+        "-list",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="If provided, list all available locations.",
+    )
     d = vars(parser.parse_args())
 
-    if sum([d["add_location"], d["add_tides"], d["rm_location"], d["set_location"]]) > 1:
-        raise ValueError(reformat("Only one of -add_location, -add_tides, -rm_location, or -set_location may be provided at one time.", input_type="error"))
-    elif sum([d["add_location"], d["add_tides"], d["rm_location"], d["set_location"]]) == 1:
+    if sum([d["add_location"], d["add_tides"], d["rm_location"], d["set_location"], d["list"]]) > 1:
+        raise ValueError(reformat("Only one of -add_location, -add_tides, -rm_location, -set_location, or -list may be provided at one time.", input_type="error"))
+    elif sum([d["add_location"], d["add_tides"], d["rm_location"], d["set_location"], d["list"]]) == 1:
         if d["add_location"]:
             add_location(config)
         elif d["add_tides"]:
@@ -157,6 +169,8 @@ def main():
             rm_location(config)
         elif d["set_location"]:
             set_location(config)
+        elif d["list"]:
+            list_locations(config)
     else:
         if len(config) is 0:
             raise ValueError(reformat("No config yet specified. Use -add_location argument to initialize a weather location.", input_type="error"))
