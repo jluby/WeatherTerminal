@@ -13,6 +13,7 @@ def timed_sleep(t=1):
 
 halftab = " " * 4
 
+
 def init_config():
     if not os.path.isfile(config_path):
         os.makedirs(Path(config_path).parents[0], exist_ok=True)
@@ -23,6 +24,7 @@ def init_config():
     json.dump(config, open(config_path, "w"))
 
     return config
+
 
 def reformat(string: str, input_type=None):
     """Reformat text inputs depending on type."""

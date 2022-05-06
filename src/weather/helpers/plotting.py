@@ -214,7 +214,10 @@ def plot_matplot(weather_dict, d):
         plt.xlim(0, np.max(idx))
     else:
         today = date.today()
-        time_range = [f"{calendar.day_name[(today + timedelta(days=i)).weekday()]}\n{(today + timedelta(days=i)).strftime('%-m/%-d')}" for i in range(d["n_days"])]
+        time_range = [
+            f"{calendar.day_name[(today + timedelta(days=i)).weekday()]}\n{(today + timedelta(days=i)).strftime('%-m/%-d')}"
+            for i in range(d["n_days"])
+        ]
         plot_dicts = [
             {
                 "v": weather_dict["precipChance"],

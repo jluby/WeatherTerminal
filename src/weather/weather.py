@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
-"""Display weather forecast according to user config."""
+"""Utilities for local weather plotting."""
 
 # base imports
 import argparse
+import json
+import re
 from contextlib import suppress
 from datetime import date, timedelta
-import json
 from pathlib import Path
 from pprint import pprint
-import re
-import noaa_coops as nc
 
+import noaa_coops as nc
 import requests
 
 from weather.helpers import plotting, scrape
 from weather.helpers.configure import config_path, init_config, reformat
+
 
 def add_location(config):
     loc_config = {}
@@ -23,37 +24,38 @@ def add_location(config):
     while alias == "":
         alias = input(f"\nProvide an alias for this location: Existing aliases are: {aliases}\n\t").upper()
         if alias in config.keys():
-            alias = ""; print("\nAlias already exists in keys.\n")
-    loc_config["weather_hash"] = ""; match = None
+            alias = ""
+            print("\nAlias already exists in keys.\n")
+    loc_config["weather_hash"] = ""
+    match = None
     while match is None:
         if loc_config["weather_hash"] == "":
             input_str = "Please navigate to the weather.com page for the location and enter the URL below. The url should follow the format (https://weather.com/weather/[timeframe]/l/[location_hash])"
         else:
             input_str = "There was a problem verifying your location. Please verify your entry and try again:"
         with suppress(ValueError):
-            loc_config["weather_hash"] = Path(
-                input(reformat(input_str, input_type="input"))
-            ).stem
-            page_text = requests.get(
-                f"https://weather.com/weather/hourly/l/{loc_config['weather_hash']}"
-            ).text
+            loc_config["weather_hash"] = Path(input(reformat(input_str, input_type="input"))).stem
+            page_text = requests.get(f"https://weather.com/weather/hourly/l/{loc_config['weather_hash']}").text
             # get latitude and logitude by regex to ensure we've found a page
-            match = re.search(
-                r'"latitude\\":(.*?),\\"longitude\\":(.*?),', page_text
-            )
+            match = re.search(r'"latitude\\":(.*?),\\"longitude\\":(.*?),', page_text)
     config[alias] = loc_config
     config[alias]["lat_lon"] = (float(match.group(1)), float(match.group(2)))
-    config[alias]["name"] = re.search(r"Hourly Weather Forecast for(.*?)- The Weather Channel", page_text).group(1).strip()
+    config[alias]["name"] = (
+        re.search(r"Hourly Weather Forecast for(.*?)- The Weather Channel", page_text).group(1).strip()
+    )
 
     json.dump(config, open(config_path, "w"))
     print(f"\n\tLocation successfully initialized and saved.\n")
-            
+
+
 def add_tides(config):
     aliases = list(config.keys())
     alias = ""
     while alias.upper() not in aliases:
         alias = input(f"\tTo which location would you like to add tides? Available aliases are: {aliases}\n\t").upper()
-    station = input(f"\n\tEnter the 7-digit NOAA station ID for this location. Stations can be found at https://tidesandcurrents.noaa.gov/\n\t")
+    station = input(
+        f"\n\tEnter the 7-digit NOAA station ID for this location. Stations can be found at https://tidesandcurrents.noaa.gov/\n\t"
+    )
     try:
         nc_station = nc.Station(int(station))
         nc_station.get_data(
@@ -67,10 +69,11 @@ def add_tides(config):
     except:
         print(f"No valid datum value for MLLW ***station={station} Please check the station ID and try again.")
         return 0
-    
+
     config[alias]["tide_station"] = int(station)
     json.dump(config, open(config_path, "w"))
     print(f"\n\tTide station successfully initialized and saved.\n")
+
 
 def rm_location(config):
     aliases = list(config.keys())
@@ -81,25 +84,30 @@ def rm_location(config):
     json.dump(config, open(config_path, "w"))
     print(f"\n\tLocation metadata successfully deleted.\n")
 
+
 def set_location(config):
     aliases = list(config.keys())
     set_loc = ""
     while set_loc.upper() not in aliases:
-        set_loc = input(f"\tWhich location would you like to set as default? Available aliases are: {aliases}\n\t").upper()
-    config = {**{set_loc: config[set_loc]}, **{k:v for k,v in config.items() if k != set_loc}}
+        set_loc = input(
+            f"\tWhich location would you like to set as default? Available aliases are: {aliases}\n\t"
+        ).upper()
+    config = {**{set_loc: config[set_loc]}, **{k: v for k, v in config.items() if k != set_loc}}
     json.dump(config, open(config_path, "w"))
     print(f"\n\tLocation successfully set as default.\n")
 
+
 def list_locations(config):
     print(f"\nAvailable locations are:")
-    pprint({alias:config[alias]["name"] for alias in config.keys()})
+    pprint({alias: config[alias]["name"] for alias in config.keys()})
     print("")
+
 
 def main():
     config = init_config()
 
     # establish parser to pull in projects to view
-    parser = argparse.ArgumentParser(description="Input parameters.")
+    parser = argparse.ArgumentParser(description="Utilities for local weather plotting.")
 
     parser.add_argument(
         "n_days",
@@ -159,7 +167,12 @@ def main():
     d = vars(parser.parse_args())
 
     if sum([d["add_location"], d["add_tides"], d["rm_location"], d["set_location"], d["list"]]) > 1:
-        raise ValueError(reformat("Only one of -add_location, -add_tides, -rm_location, -set_location, or -list may be provided at one time.", input_type="error"))
+        raise ValueError(
+            reformat(
+                "Only one of -add_location, -add_tides, -rm_location, -set_location, or -list may be provided at one time.",
+                input_type="error",
+            )
+        )
     elif sum([d["add_location"], d["add_tides"], d["rm_location"], d["set_location"], d["list"]]) == 1:
         if d["add_location"]:
             add_location(config)
@@ -173,7 +186,12 @@ def main():
             list_locations(config)
     else:
         if len(config) is 0:
-            raise ValueError(reformat("No config yet specified. Use -add_location argument to initialize a weather location.", input_type="error"))
+            raise ValueError(
+                reformat(
+                    "No config yet specified. Use -add_location argument to initialize a weather location.",
+                    input_type="error",
+                )
+            )
         elif d["alias"] is None:
             loc_config = config[list(config.keys())[0]]
         else:
@@ -211,6 +229,7 @@ def main():
         weather_dict["name"] = loc_config["name"]
 
         plotting.plot_matplot(weather_dict, d)
+
 
 if __name__ == "__main__":
     main()
