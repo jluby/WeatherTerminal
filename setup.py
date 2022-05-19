@@ -1,4 +1,3 @@
-from struct import pack
 import setuptools
 import os
 
