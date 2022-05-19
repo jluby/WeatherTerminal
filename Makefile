@@ -1,13 +1,14 @@
 #!/usr/bin/make -f
 SHELL = /bin/sh
-include config.mk
 .DELETE_ON_ERROR:
 
 # boilerplate variables, do not edit
 MAKEFILE_PATH := $(abspath $(firstword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-# required values, set to defaults here if not given in config.mk
+# required values
+PACKAGE_DIR = src
+LINTING_LINELENGTH = 120
 PYTHON ?= python3
 CODECOV_TOKEN ?= ${CODECOV_TOKEN}
 
