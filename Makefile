@@ -8,8 +8,6 @@ MAKEFILE_PATH := $(abspath $(firstword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 # required values, set to defaults here if not given in config.mk
-PACKAGE_DIR ?= weather_terminal
-LINTING_LINELENGTH ?= 120
 PYTHON ?= python3
 CODECOV_TOKEN ?= ${CODECOV_TOKEN}
 
@@ -23,7 +21,7 @@ CLEAN_DIR_REGEX_INCLUDED = $(PACKAGE_DIR)
 ## help :		print this help.
 .PHONY: help
 help: Makefile
-	@echo "\nPersonal package for managing project TODOs, notes, and references."
+	@echo "\nPersonal weather forecasting CLI package."
 	@echo "\n	Generic commands"
 	@sed -n 's/^## /		/p' $< | sort
 
