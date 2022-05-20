@@ -67,7 +67,9 @@ def add_tides(config):
             time_zone="gmt",
         )
     except:
-        raise ValueError(f"No valid datum value for MLLW ***station={station} Please check the station ID and try again.")
+        raise ValueError(
+            f"No valid datum value for MLLW ***station={station} Please check the station ID and try again."
+        )
 
     config[alias]["tide_station"] = int(station)
     json.dump(config, open(config_path, "w"))
