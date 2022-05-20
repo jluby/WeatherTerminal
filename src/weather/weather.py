@@ -45,7 +45,7 @@ def add_location(config):
     )
 
     json.dump(config, open(config_path, "w"))
-    print(f"\n\tLocation successfully initialized and saved.\n")
+    print("\n\tLocation successfully initialized and saved.\n")
 
 
 def add_tides(config):
@@ -54,7 +54,7 @@ def add_tides(config):
     while alias.upper() not in aliases:
         alias = input(f"\tTo which location would you like to add tides? Available aliases are: {aliases}\n\t").upper()
     station = input(
-        f"\n\tEnter the 7-digit NOAA station ID for this location. Stations can be found at https://tidesandcurrents.noaa.gov/\n\t"
+        "\n\tEnter the 7-digit NOAA station ID for this location. Stations can be found at https://tidesandcurrents.noaa.gov/\n\t"
     )
     try:
         nc_station = nc.Station(int(station))
@@ -72,7 +72,7 @@ def add_tides(config):
 
     config[alias]["tide_station"] = int(station)
     json.dump(config, open(config_path, "w"))
-    print(f"\n\tTide station successfully initialized and saved.\n")
+    print("\n\tTide station successfully initialized and saved.\n")
 
 
 def rm_location(config):
@@ -82,7 +82,7 @@ def rm_location(config):
         rm_loc = input(f"\tWhich location would you like to remove? Available aliases are: {aliases}\n\t").upper()
     del config[rm_loc]
     json.dump(config, open(config_path, "w"))
-    print(f"\n\tLocation metadata successfully deleted.\n")
+    print("\n\tLocation metadata successfully deleted.\n")
 
 
 def set_location(config):
@@ -94,11 +94,11 @@ def set_location(config):
         ).upper()
     config = {**{set_loc: config[set_loc]}, **{k: v for k, v in config.items() if k != set_loc}}
     json.dump(config, open(config_path, "w"))
-    print(f"\n\tLocation successfully set as default.\n")
+    print("\n\tLocation successfully set as default.\n")
 
 
 def list_locations(config):
-    print(f"\nAvailable locations are:")
+    print("\nAvailable locations are:")
     pprint({alias: config[alias]["name"] for alias in config.keys()})
     print("")
 
@@ -185,7 +185,7 @@ def main():
         elif d["list"]:
             list_locations(config)
     else:
-        if len(config) is 0:
+        if len(config) == 0:
             raise ValueError(
                 reformat(
                     "No config yet specified. Use -add_location argument to initialize a weather location.",

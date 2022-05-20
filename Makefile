@@ -73,3 +73,16 @@ lint-py: clean
 		--trailing-comma \
 		$(CLEAN_DIR_LIST_INCLUDED)
 lint: lint-py
+
+## flake :		flag unused imports and variables. silence returned error if corrections need to be made.
+.PHONY: flake
+flake:
+	pyflakes $(CLEAN_DIR_REGEX_INCLUDED)
+
+## autoflake :		remove unused imports and clean up f-string issues.
+autoflake: 
+	autoflake -r --in-place --remove-all-unused-imports $(CLEAN_DIR_LIST_INCLUDED)
+
+## autoflake_all :		remove unused imports and variables.
+autoflake_all: autoflake
+	autoflake -r --in-place remove-unused-variables $(CLEAN_DIR_LIST_INCLUDED)

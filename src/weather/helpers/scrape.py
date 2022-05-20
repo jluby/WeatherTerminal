@@ -6,7 +6,6 @@ import noaa_coops as nc
 import pandas as pd
 import requests
 import timezonefinder
-from parse import *
 
 hour_attrs = [
     "validTimeLocal",
