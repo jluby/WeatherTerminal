@@ -82,6 +82,7 @@ flake:
 ## autoflake :		remove unused imports and clean up f-string issues.
 autoflake: 
 	autoflake -r --in-place --remove-all-unused-imports $(CLEAN_DIR_LIST_INCLUDED)
+	rm-unneeded-f-str $(CLEAN_DIR_LIST_INCLUDED)
 
 ## autoflake_all :		remove unused imports and variables.
 autoflake_all: autoflake
