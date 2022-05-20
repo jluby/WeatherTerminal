@@ -4,6 +4,7 @@
 # base imports
 import argparse
 import json
+from multiprocessing.sharedctypes import Value
 import re
 from contextlib import suppress
 from datetime import date, timedelta
@@ -67,8 +68,7 @@ def add_tides(config):
             time_zone="gmt",
         )
     except:
-        print(f"No valid datum value for MLLW ***station={station} Please check the station ID and try again.")
-        return 0
+        raise ValueError(f"No valid datum value for MLLW ***station={station} Please check the station ID and try again.")
 
     config[alias]["tide_station"] = int(station)
     json.dump(config, open(config_path, "w"))
