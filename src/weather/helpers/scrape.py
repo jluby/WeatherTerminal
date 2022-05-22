@@ -184,7 +184,7 @@ def get_historical_temperatures(soup, d):
                 for x in value_str.split(",")
             ]
         else:
-            temp_dict[temp_obs] = [float(x) for x in value_str.split(",")]
+            temp_dict[temp_obs] = [float(x) if x != "null" else float("NaN") for x in value_str.split(",")]
 
     out_dict = {k: [] for k in temp_dict.keys()}
     for idx in range(len(temp_dict["almanacRecordDate"])):
