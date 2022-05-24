@@ -72,21 +72,21 @@ def plot_terminal(weather_dict, d):
 
 
 def define_marker(windDirection):
-    if windDirection == "N":
+    if windDirection == "S":
         return "$\u2B06$"
-    elif windDirection == "W":
-        return "$\u2B05$"
-    elif windDirection == "S":
-        return "$\u2B07$"
     elif windDirection == "E":
+        return "$\u2B05$"
+    elif windDirection == "N":
+        return "$\u2B07$"
+    elif windDirection == "W":
         return "$\u27A1$"
-    elif "N" in windDirection and "W" in windDirection:
-        return "$\u2B09$"
-    elif "S" in windDirection and "W" in windDirection:
-        return "$\u2B0B$"
-    elif "N" in windDirection and "E" in windDirection:
-        return "$\u2B08$"
     elif "S" in windDirection and "E" in windDirection:
+        return "$\u2B09$"
+    elif "N" in windDirection and "E" in windDirection:
+        return "$\u2B0B$"
+    elif "S" in windDirection and "W" in windDirection:
+        return "$\u2B08$"
+    elif "N" in windDirection and "W" in windDirection:
         return "$\u2B0A$"
 
 
