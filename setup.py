@@ -23,5 +23,6 @@ setuptools.setup(
     python_requires=">=3.6",
     entry_points={
     'console_scripts': [f'{file[:-3]} = weather.{file[:-3]}:main' for file in os.listdir("src/weather") if file[-3:] == ".py"]
-    }
+    },
+    install_requires=[line.strip() for line in open("requirements.txt").readlines()]
 )
